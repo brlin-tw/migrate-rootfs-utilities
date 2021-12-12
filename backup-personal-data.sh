@@ -22,6 +22,10 @@ DESTINATION_ADDR=root@brlin-Vostro-5481.local
 COMMON_RSYNC_OPTIONS=(
     --archive
     --acls
+    --exclude '*~'
+    --exclude '*.log'
+    --exclude '*.log.*'
+    --exclude '*.old'
     --exclude nohup.out
     --one-file-system
     --human-readable
