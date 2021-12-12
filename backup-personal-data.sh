@@ -67,6 +67,10 @@ WIREGUARD_RSYNC_OPTIONS=(
     --delete-excluded
 )
 
+SSH_RSYNC_OPTIONS=(
+    "${COMMON_RSYNC_OPTIONS[@]}"
+)
+
 # ↓↓↓從這裡開始寫↓↓↓
 init(){
     if test "$(id --user)" != 0; then
@@ -84,6 +88,7 @@ init(){
     sync_workspace_directories
     sync_common_user_directories
     sync_wireguard_configuration
+    sync_ssh_config_and_keys
 
     end_timestamp="$(date +%s)"
     printf \
@@ -211,6 +216,14 @@ sync_wireguard_configuration(){
         "${WIREGUARD_RSYNC_OPTIONS[@]}" \
         /etc/wireguard \
         "${DESTINATION_ADDR}:/etc/"
+}
+
+sync_ssh_config_and_keys(){
+    printf 'Info: Syncing SSH configuration and keys...\n'
+    rsync \
+        "${SSH_RSYNC_OPTIONS[@]}" \
+        "${USER_HOME_DIR}"/.ssh \
+        "${DESTINATION_ADDR}:${USER_HOME_DIR}/"
 }
 
 init
