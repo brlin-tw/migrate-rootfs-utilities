@@ -30,6 +30,7 @@ COMMON_RSYNC_OPTIONS=(
     --one-file-system
     --human-readable
     --human-readable
+    --mkpath
     --progress
     --verbose
     --xattrs
@@ -200,7 +201,7 @@ sync_common_user_directories(){
         rsync \
             "${USER_DIRS_RSYNC_OPTIONS[@]}" \
             "${USER_HOME_DIR}/${common_user_dir}" \
-            "${DESTINATION_ADDR}:/mnt/data"
+            "${DESTINATION_ADDR}:/mnt/data/"
     done
 }
 
@@ -209,7 +210,7 @@ sync_wireguard_configuration(){
     rsync \
         "${WIREGUARD_RSYNC_OPTIONS[@]}" \
         /etc/wireguard \
-        "${DESTINATION_ADDR}:/etc"
+        "${DESTINATION_ADDR}:/etc/"
 }
 
 init
