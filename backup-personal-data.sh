@@ -59,6 +59,13 @@ USER_DIRS_RSYNC_OPTIONS=(
     --exclude "${USER_HOME_DIR}/文件/工作空間/"
 )
 
+WIREGUARD_RSYNC_OPTIONS=(
+    "${COMMON_RSYNC_OPTIONS[@]}"
+    --delete
+    --delete-after
+    --delete-excluded
+)
+
 # ↓↓↓從這裡開始寫↓↓↓
 init(){
     if test "$(id --user)" != 0; then
@@ -200,7 +207,7 @@ sync_common_user_directories(){
 sync_wireguard_configuration(){
     printf 'Info: Syncing WireGuard configuration files...\n'
     sudo rsync \
-        "${COMMON_RSYNC_OPTIONS[@]}" \
+        "${WIREGUARD_RSYNC_OPTIONS[@]}" \
         /etc/wireguard \
         "${DESTINATION_ADDR}:/etc"
 }
