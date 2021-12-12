@@ -47,12 +47,12 @@ WORKSPACE_RSYNC_OPTIONS=(
 # previously synced workspace dir
 USER_DIRS_RSYNC_OPTIONS=(
     "${COMMON_RSYNC_OPTIONS[@]}"
-        --exclude nohup.out
-        --exclude .vagrant/
-        --exclude cache/
-        --exclude .cache/
-        --exclude "${USER_HOME_DIR}/下載/Telegram Desktop/**"
-        --exclude "${USER_HOME_DIR}/文件/工作空間/"
+    --exclude nohup.out
+    --exclude .vagrant/
+    --exclude cache/
+    --exclude .cache/
+    --exclude "${USER_HOME_DIR}/下載/Telegram Desktop/**"
+    --exclude "${USER_HOME_DIR}/文件/工作空間/"
 )
 
 # ↓↓↓從這裡開始寫↓↓↓
