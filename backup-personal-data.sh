@@ -30,7 +30,10 @@ COMMON_RSYNC_OPTIONS=(
     --one-file-system
     --human-readable
     --human-readable
-    --mkpath
+
+    # COMPAT: Not supported in old version
+    #--mkpath
+
     --progress
     --verbose
     --xattrs
