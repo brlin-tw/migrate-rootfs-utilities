@@ -55,6 +55,34 @@ USER_DIRS_RSYNC_OPTIONS=(
         --exclude "${USER_HOME_DIR}/文件/工作空間/"
 )
 
+# ↓↓↓從這裡開始寫↓↓↓
+init(){
+    if test "$(id --user)" != 0; then
+        printf \
+            'Error: This program should be run as the superuser(root).\n' \
+            1>&2
+        exit 1
+    fi
+
+    local -i \
+        start_timestamp \
+        end_timestamp
+    start_timestamp="$(date +%s)"
+
+    sync_workspace_directories
+    sync_common_user_directories
+    sync_wireguard_configuration
+
+    end_timestamp="$(date +%s)"
+    printf \
+        'Info: Runtime: %s\n' \
+        "$(
+            determine_elapsed_time \
+                "${start_timestamp}" \
+                "${end_timestamp}"
+        )"
+}
+
 # ERR情境所觸發的陷阱函式，用來進行腳本錯誤退出的後續處裡
 trap_err(){
     printf \
@@ -91,27 +119,86 @@ trap trap_err ERR
     fi
 }
 
-# ↓↓↓從這裡開始寫↓↓↓
-# printf 'Syncing workspace directories...\n'
-# sudo rsync \
-#     "${WORKSPACE_RSYNC_OPTIONS[@]}" \
-#     /home/brlin/文件/工作空間/ \
-#     "${DESTINATION_ADDR}:/mnt/data/文件/工作空間"
+determine_elapsed_time(){
+    local -i start_timestamp="${1}"; shift
+    local -i end_timestamp="${1}"; shift
 
-printf 'Info: Syncing common user directories...\n'
-for common_user_dir in \
-    下載 \
-    公共 \
-    圖片 \
-    影片 \
-    文件 \
-    桌面 \
-    模板 \
-    軟體 \
-    音樂
-    do
+    elapsed_seconds="$((end_timestamp - start_timestamp))"
+
+    elapsed_minutes="$((elapsed_seconds / 60))"
+    elapsed_seconds="$((elapsed_seconds % 60))"
+
+    elapsed_hours="$((elapsed_minutes / 60))"
+    elapsed_minutes="$((elapsed_minutes % 60))"
+
+    elapsed_days="$((elapsed_hours / 24))"
+    elapsed_hours="$((elapsed_hours % 24))"
+
+    local flag_more_than_one_minute=false
+    if test "${elapsed_days}" -ne 0; then
+        flag_more_than_one_minute=true
+        printf \
+            '%s days, ' \
+            "${elapsed_days}"
+    fi
+    if test "${elapsed_hours}" -ne 0; then
+        flag_more_than_one_minute=true
+        printf \
+            '%s hours, ' \
+            "${elapsed_hours}"
+    fi
+    if test "${elapsed_minutes}" -ne 0; then
+        flag_more_than_one_minute=true
+        printf \
+            '%s minutes, ' \
+            "${elapsed_minutes}"
+    fi
+    if test "${flag_more_than_one_minute}" == false; then
+        printf \
+            '%s seconds' \
+            "${elapsed_seconds}"
+    else
+        printf \
+            'and %s seconds' \
+            "${elapsed_seconds}"
+    fi
+}
+
+sync_workspace_directories(){
+    printf 'Syncing workspace directories...\n'
     sudo rsync \
-        "${USER_DIRS_RSYNC_OPTIONS[@]}" \
-        "${USER_HOME_DIR}/${common_user_dir}" \
-        "${DESTINATION_ADDR}:/mnt/data"
-done
+        "${WORKSPACE_RSYNC_OPTIONS[@]}" \
+        "${USER_HOME_DIR}/home/brlin/文件/工作空間/" \
+        "${DESTINATION_ADDR}:/mnt/data/文件/工作空間"
+}
+
+sync_common_user_directories(){
+    printf 'Info: Syncing common user directories...\n'
+    # FIXME: Hardcoded user dir names, should check config
+    for common_user_dir in \
+        下載 \
+        公共 \
+        圖片 \
+        影片 \
+        文件 \
+        桌面 \
+        模板 \
+        軟體 \
+        音樂
+        do
+        sudo rsync \
+            "${USER_DIRS_RSYNC_OPTIONS[@]}" \
+            "${USER_HOME_DIR}/${common_user_dir}" \
+            "${DESTINATION_ADDR}:/mnt/data"
+    done
+}
+
+sync_wireguard_configuration(){
+    printf 'Info: Syncing WireGuard configuration files...\n'
+    sudo rsync \
+        "${COMMON_RSYNC_OPTIONS[@]}" \
+        /etc/wireguard \
+        "${DESTINATION_ADDR}:/etc"
+}
+
+init
