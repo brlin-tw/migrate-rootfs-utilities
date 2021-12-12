@@ -74,6 +74,10 @@ SSH_RSYNC_OPTIONS=(
     "${COMMON_RSYNC_OPTIONS[@]}"
 )
 
+DATA_RSYNC_OPTIONS=(
+    "${COMMON_RSYNC_OPTIONS[@]}"
+)
+
 # ↓↓↓從這裡開始寫↓↓↓
 init(){
     if test "$(id --user)" != 0; then
@@ -88,10 +92,11 @@ init(){
         end_timestamp
     start_timestamp="$(date +%s)"
 
-    sync_workspace_directories
-    sync_common_user_directories
-    sync_wireguard_configuration
-    sync_ssh_config_and_keys
+#     sync_workspace_directories
+#     sync_common_user_directories
+#     sync_wireguard_configuration
+#     sync_ssh_config_and_keys
+    sync_data_filesystem
 
     end_timestamp="$(date +%s)"
     printf \
@@ -227,6 +232,14 @@ sync_ssh_config_and_keys(){
         "${SSH_RSYNC_OPTIONS[@]}" \
         "${USER_HOME_DIR}"/.ssh \
         "${DESTINATION_ADDR}:${USER_HOME_DIR}/"
+}
+
+sync_data_filesystem(){
+    printf 'Info: Syncing data filesystem...\n'
+    rsync \
+        "${DATA_RSYNC_OPTIONS[@]}" \
+        /media/brlin/Ubuntu/ \
+        "${DESTINATION_ADDR}:/mnt/data/"
 }
 
 init
