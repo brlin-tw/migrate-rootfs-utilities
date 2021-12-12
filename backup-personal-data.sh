@@ -13,6 +13,47 @@ set \
     -o nounset
 
 # 方便給別人改的變數宣告放在這裡，變數名稱建議大寫英文與底線
+USER=brlin
+USER_HOME_DIR="$(
+    getent passwd "${USER}" \
+        | cut --delimiter=: --fields=6
+)"
+DESTINATION_ADDR=root@brlin-Vostro-5481.local
+COMMON_RSYNC_OPTIONS=(
+    --archive
+    --acls
+    --one-file-system
+    --human-readable
+    --human-readable
+    --progress
+    --verbose
+    --xattrs
+)
+WORKSPACE_RSYNC_OPTIONS=(
+    "${COMMON_RSYNC_OPTIONS[@]}"
+    --checksum
+    --delete
+    --delete-after
+    --delete-excluded
+    --exclude .vagrant/
+    --exclude cache/
+    --exclude .cache/
+    --exclude "${USER_HOME_DIR}/文件/工作空間/第三方專案/**"
+    --exclude stage/
+    --exclude prime/
+)
+
+# We can't delete excluded files here as we don't want to remove the
+# previously synced workspace dir
+USER_DIRS_RSYNC_OPTIONS=(
+    "${COMMON_RSYNC_OPTIONS[@]}"
+        --exclude nohup.out
+        --exclude .vagrant/
+        --exclude cache/
+        --exclude .cache/
+        --exclude "${USER_HOME_DIR}/下載/Telegram Desktop/**"
+        --exclude "${USER_HOME_DIR}/文件/工作空間/"
+)
 
 # ERR情境所觸發的陷阱函式，用來進行腳本錯誤退出的後續處裡
 trap_err(){
@@ -51,22 +92,26 @@ trap trap_err ERR
 }
 
 # ↓↓↓從這裡開始寫↓↓↓
-sudo rsync \
-    --archive \
-    --acls \
-    --one-file-system \
-    --checksum \
-    --delete \
-    --delete-after \
-    --delete-excluded \
-    --exclude .vagrant/ \
-    --exclude /home/brlin/文件/工作空間/第三方專案/ \
-    --exclude stage/ \
-    --exclude prime/ \
-    --human-readable \
-    --human-readable \
-    --progress \
-    --verbose \
-    --xattrs \
-    /home/brlin/文件/工作空間/ \
-    /media/brlin/Ubuntu-portable/home/brlin/文件/工作空間
+# printf 'Syncing workspace directories...\n'
+# sudo rsync \
+#     "${WORKSPACE_RSYNC_OPTIONS[@]}" \
+#     /home/brlin/文件/工作空間/ \
+#     "${DESTINATION_ADDR}:/mnt/data/文件/工作空間"
+
+printf 'Info: Syncing common user directories...\n'
+for common_user_dir in \
+    下載 \
+    公共 \
+    圖片 \
+    影片 \
+    文件 \
+    桌面 \
+    模板 \
+    軟體 \
+    音樂
+    do
+    sudo rsync \
+        "${USER_DIRS_RSYNC_OPTIONS[@]}" \
+        "${USER_HOME_DIR}/${common_user_dir}" \
+        "${DESTINATION_ADDR}:/mnt/data"
+done
