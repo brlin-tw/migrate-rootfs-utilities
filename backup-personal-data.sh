@@ -22,6 +22,7 @@ DESTINATION_ADDR=root@brlin-Vostro-5481.local
 COMMON_RSYNC_OPTIONS=(
     --archive
     --acls
+    --exclude nohup.out
     --one-file-system
     --human-readable
     --human-readable
@@ -47,7 +48,6 @@ WORKSPACE_RSYNC_OPTIONS=(
 # previously synced workspace dir
 USER_DIRS_RSYNC_OPTIONS=(
     "${COMMON_RSYNC_OPTIONS[@]}"
-    --exclude nohup.out
     --exclude .vagrant/
     --exclude cache/
     --exclude .cache/
