@@ -188,8 +188,8 @@ sync_workspace_directories(){
     printf 'Syncing workspace directories...\n'
     rsync \
         "${WORKSPACE_RSYNC_OPTIONS[@]}" \
-        "${USER_HOME_DIR}/home/brlin/文件/工作空間/" \
-        "${DESTINATION_ADDR}:/mnt/data/文件/工作空間"
+        "${USER_HOME_DIR}/文件/工作空間" \
+        "${DESTINATION_ADDR}:/mnt/data/文件"
 }
 
 sync_common_user_directories(){
