@@ -177,7 +177,7 @@ determine_elapsed_time(){
 
 sync_workspace_directories(){
     printf 'Syncing workspace directories...\n'
-    sudo rsync \
+    rsync \
         "${WORKSPACE_RSYNC_OPTIONS[@]}" \
         "${USER_HOME_DIR}/home/brlin/文件/工作空間/" \
         "${DESTINATION_ADDR}:/mnt/data/文件/工作空間"
@@ -197,7 +197,7 @@ sync_common_user_directories(){
         軟體 \
         音樂
         do
-        sudo rsync \
+        rsync \
             "${USER_DIRS_RSYNC_OPTIONS[@]}" \
             "${USER_HOME_DIR}/${common_user_dir}" \
             "${DESTINATION_ADDR}:/mnt/data"
@@ -206,7 +206,7 @@ sync_common_user_directories(){
 
 sync_wireguard_configuration(){
     printf 'Info: Syncing WireGuard configuration files...\n'
-    sudo rsync \
+    rsync \
         "${WIREGUARD_RSYNC_OPTIONS[@]}" \
         /etc/wireguard \
         "${DESTINATION_ADDR}:/etc"
