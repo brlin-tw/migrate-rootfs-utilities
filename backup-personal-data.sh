@@ -78,6 +78,13 @@ DATA_RSYNC_OPTIONS=(
     "${COMMON_RSYNC_OPTIONS[@]}"
 )
 
+GNUPG_RSYNC_OPTIONS=(
+    "${COMMON_RSYNC_OPTIONS[@]}"
+    --delete
+    --delete-after
+    --delete-excluded
+)
+
 # ↓↓↓從這裡開始寫↓↓↓
 init(){
     if test "$(id --user)" != 0; then
@@ -96,7 +103,9 @@ init(){
 #     sync_common_user_directories
 #     sync_wireguard_configuration
 #     sync_ssh_config_and_keys
-    sync_data_filesystem
+    #sync_data_filesystem
+    #sync_gnupg_config_and_keys
+    sync_udpraw_installation
 
     end_timestamp="$(date +%s)"
     printf \
@@ -240,6 +249,22 @@ sync_data_filesystem(){
         "${DATA_RSYNC_OPTIONS[@]}" \
         /media/brlin/Ubuntu/ \
         "${DESTINATION_ADDR}:/mnt/data/"
+}
+
+sync_gnupg_config_and_keys(){
+    printf 'Info: Syncing GnuPG configuration and keys...\n'
+    rsync \
+        "${GNUPG_RSYNC_OPTIONS[@]}" \
+        "${USER_HOME_DIR}"/.gnupg \
+        "${DESTINATION_ADDR}:"
+}
+
+sync_udpraw_installation(){
+    printf 'Info: Syncing udp2raw installation...\n'
+    rsync \
+        "${COMMON_RSYNC_OPTIONS[@]}" \
+        /opt/udp2raw \
+        "${DESTINATION_ADDR}:/opt"
 }
 
 init
