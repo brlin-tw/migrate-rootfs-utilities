@@ -1,13 +1,8 @@
 #!/usr/bin/env bash
-# Backup personal data to another medium
+# Migrate system data to another rootfs
 #
 # Copyright 2025 林博仁(Buo-ren Lin) <buo.ren.lin@gmail.com>
 # SPDX-License-Identifier: AGPL-3.0-or-later
-USER=brlin
-USER_HOME_DIR="$(
-    getent passwd "${USER}" \
-        | cut --delimiter=: --fields=6
-)"
 DESTINATION_ADDR=root@brlin-Vostro-5481.local
 COMMON_RSYNC_OPTIONS=(
     --archive
@@ -28,40 +23,8 @@ COMMON_RSYNC_OPTIONS=(
     --verbose
     --xattrs
 )
-WORKSPACE_RSYNC_OPTIONS=(
-    "${COMMON_RSYNC_OPTIONS[@]}"
-    --checksum
-    --delete
-    --delete-after
-    --delete-excluded
-    --exclude .vagrant/
-    --exclude cache/
-    --exclude .cache/
-    --exclude "${USER_HOME_DIR}/文件/工作空間/第三方專案/**"
-    --exclude stage/
-    --exclude prime/
-)
 
-# We can't delete excluded files here as we don't want to remove the
-# previously synced workspace dir
-USER_DIRS_RSYNC_OPTIONS=(
-    "${COMMON_RSYNC_OPTIONS[@]}"
-    --exclude .vagrant/
-    --exclude cache/
-    --exclude .cache/
-    --exclude "${USER_HOME_DIR}/下載/Telegram Desktop/**"
-    --exclude "${USER_HOME_DIR}/文件/工作空間/"
-)
-
-SSH_RSYNC_OPTIONS=(
-    "${COMMON_RSYNC_OPTIONS[@]}"
-)
-
-DATA_RSYNC_OPTIONS=(
-    "${COMMON_RSYNC_OPTIONS[@]}"
-)
-
-GNUPG_RSYNC_OPTIONS=(
+WIREGUARD_RSYNC_OPTIONS=(
     "${COMMON_RSYNC_OPTIONS[@]}"
     --delete
     --delete-after
@@ -89,11 +52,8 @@ init(){
         end_timestamp
     start_timestamp="$(date +%s)"
 
-#     sync_workspace_directories
-#     sync_common_user_directories
-#     sync_ssh_config_and_keys
-    #sync_data_filesystem
-    #sync_gnupg_config_and_keys
+#     sync_wireguard_configuration
+    #sync_udpraw_installation
 
     end_timestamp="$(date +%s)"
     printf \
@@ -184,60 +144,20 @@ determine_elapsed_time(){
     fi
 }
 
-sync_workspace_directories(){
-    printf 'Syncing workspace directories...\n'
+sync_wireguard_configuration(){
+    printf 'Info: Syncing WireGuard configuration files...\n'
     rsync \
-        "${WORKSPACE_RSYNC_OPTIONS[@]}" \
-        "${USER_HOME_DIR}/文件/工作空間" \
-        "${DESTINATION_ADDR}:/mnt/data/文件"
+        "${WIREGUARD_RSYNC_OPTIONS[@]}" \
+        /etc/wireguard \
+        "${DESTINATION_ADDR}:/etc/"
 }
 
-sync_common_user_directories(){
-    printf 'Info: Syncing common user directories...\n'
-    # FIXME: Hardcoded user dir names, should check config
-    for common_user_dir in \
-        下載 \
-        公共 \
-        圖片 \
-        影片 \
-        文件 \
-        桌面 \
-        模板 \
-        軟體 \
-        音樂
-        do
-        if ! test -e "${USER_HOME_DIR}/${common_user_dir}"; then
-            continue
-        fi
-        rsync \
-            "${USER_DIRS_RSYNC_OPTIONS[@]}" \
-            "${USER_HOME_DIR}/${common_user_dir}" \
-            "${DESTINATION_ADDR}:/mnt/data/"
-    done
-}
-
-sync_ssh_config_and_keys(){
-    printf 'Info: Syncing SSH configuration and keys...\n'
+sync_udpraw_installation(){
+    printf 'Info: Syncing udp2raw installation...\n'
     rsync \
-        "${SSH_RSYNC_OPTIONS[@]}" \
-        "${USER_HOME_DIR}"/.ssh \
-        "${DESTINATION_ADDR}:${USER_HOME_DIR}/"
-}
-
-sync_data_filesystem(){
-    printf 'Info: Syncing data filesystem...\n'
-    rsync \
-        "${DATA_RSYNC_OPTIONS[@]}" \
-        /media/brlin/Ubuntu/ \
-        "${DESTINATION_ADDR}:/mnt/data/"
-}
-
-sync_gnupg_config_and_keys(){
-    printf 'Info: Syncing GnuPG configuration and keys...\n'
-    rsync \
-        "${GNUPG_RSYNC_OPTIONS[@]}" \
-        "${USER_HOME_DIR}"/.gnupg \
-        "${DESTINATION_ADDR}:"
+        "${COMMON_RSYNC_OPTIONS[@]}" \
+        /opt/udp2raw \
+        "${DESTINATION_ADDR}:/opt"
 }
 
 init
