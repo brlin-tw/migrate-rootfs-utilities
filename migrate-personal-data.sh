@@ -79,14 +79,24 @@ init(){
     local -i \
         start_timestamp \
         end_timestamp
-    start_timestamp="$(date +%s)"
+    if ! start_timestamp="$(printf '%(%s)T')"; then
+        printf \
+            'Error: Unable to determine the start timestamp.\n' \
+            1>&2
+        exit 2
+    fi
 
     #sync_common_user_directories
     #sync_ssh_config_and_keys
     #sync_data_filesystem
     #sync_gnupg_config_and_keys
 
-    end_timestamp="$(date +%s)"
+    if ! end_timestamp="$(printf '%(%s)T')"; then
+        printf \
+            'Error: Unable to determine the end timestamp.\n' \
+            1>&2
+        exit 2
+    fi
     printf \
         'Info: Runtime: %s\n' \
         "$(

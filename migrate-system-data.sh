@@ -50,12 +50,22 @@ init(){
     local -i \
         start_timestamp \
         end_timestamp
-    start_timestamp="$(date +%s)"
+    if ! start_timestamp="$(printf '%(%s)T')"; then
+        printf \
+            'Error: Unable to determine the start timestamp.\n' \
+            1>&2
+        exit 2
+    fi
 
 #     sync_wireguard_configuration
     #sync_udpraw_installation
 
-    end_timestamp="$(date +%s)"
+    if ! end_timestamp="$(printf '%(%s)T')"; then
+        printf \
+            'Error: Unable to determine the end timestamp.\n' \
+            1>&2
+        exit 2
+    fi
     printf \
         'Info: Runtime: %s\n' \
         "$(
