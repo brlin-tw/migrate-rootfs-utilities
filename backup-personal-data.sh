@@ -1,17 +1,6 @@
 #!/usr/bin/env bash
 # Backup personal data to another medium
 
-# 於任何命令失敗（結束狀態非零）時中止腳本運行
-# 流水線(pipeline)中的任何組成命令失敗視為整條流水線失敗
-set \
-    -o errexit \
-    -o errtrace \
-    -o pipefail
-
-# 如果任何變數在未設值的狀況下被參照的話就中止腳本運行
-set \
-    -o nounset
-
 # 方便給別人改的變數宣告放在這裡，變數名稱建議大寫英文與底線
 USER=brlin
 USER_HOME_DIR="$(
@@ -84,6 +73,17 @@ GNUPG_RSYNC_OPTIONS=(
     --delete-after
     --delete-excluded
 )
+
+# 於任何命令失敗（結束狀態非零）時中止腳本運行
+# 流水線(pipeline)中的任何組成命令失敗視為整條流水線失敗
+set \
+    -o errexit \
+    -o errtrace \
+    -o pipefail
+
+# 如果任何變數在未設值的狀況下被參照的話就中止腳本運行
+set \
+    -o nounset
 
 # ↓↓↓從這裡開始寫↓↓↓
 init(){
