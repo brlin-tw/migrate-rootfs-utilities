@@ -3,8 +3,6 @@
 #
 # Copyright 2025 林博仁(Buo-ren Lin) <buo.ren.lin@gmail.com>
 # SPDX-License-Identifier: AGPL-3.0-or-later
-
-# 方便給別人改的變數宣告放在這裡，變數名稱建議大寫英文與底線
 USER=brlin
 USER_HOME_DIR="$(
     getent passwd "${USER}" \
@@ -77,18 +75,14 @@ GNUPG_RSYNC_OPTIONS=(
     --delete-excluded
 )
 
-# 於任何命令失敗（結束狀態非零）時中止腳本運行
-# 流水線(pipeline)中的任何組成命令失敗視為整條流水線失敗
 set \
     -o errexit \
     -o errtrace \
     -o pipefail
 
-# 如果任何變數在未設值的狀況下被參照的話就中止腳本運行
 set \
     -o nounset
 
-# ↓↓↓從這裡開始寫↓↓↓
 init(){
     if test "$(id --user)" != 0; then
         printf \
@@ -120,7 +114,6 @@ init(){
         )"
 }
 
-# ERR情境所觸發的陷阱函式，用來進行腳本錯誤退出的後續處裡
 trap_err(){
     printf \
         '\nScript prematurely aborted on the "%s" command at the line %s of the %s function with the exit status %u.\n' \
@@ -132,11 +125,10 @@ trap_err(){
 }
 trap trap_err ERR
 
-# 便利變數設定
+# Convenience variable definitions
 # shellcheck disable=SC2034
 {
     if ! test -v BASH_SOURCE; then
-        # 處理腳本直接透過 stdin 餵給直譯器的情境
         script_path=_stdin_
         script_name=_stdin_
         script_filename=_stdin_
