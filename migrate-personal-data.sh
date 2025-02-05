@@ -98,7 +98,7 @@ init(){
         exit 2
     fi
     printf \
-        'Info: Runtime: %s\n' \
+        'Info: Runtime: %s.\n' \
         "$(
             determine_elapsed_time \
                 "${start_timestamp}" \
