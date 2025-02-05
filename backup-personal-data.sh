@@ -220,6 +220,9 @@ sync_common_user_directories(){
         軟體 \
         音樂
         do
+        if ! test -e "${USER_HOME_DIR}/${common_user_dir}"; then
+            continue
+        fi
         rsync \
             "${USER_DIRS_RSYNC_OPTIONS[@]}" \
             "${USER_HOME_DIR}/${common_user_dir}" \
