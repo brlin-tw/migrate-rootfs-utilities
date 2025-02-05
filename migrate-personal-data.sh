@@ -81,8 +81,8 @@ init(){
         end_timestamp
     start_timestamp="$(date +%s)"
 
-#     sync_common_user_directories
-#     sync_ssh_config_and_keys
+    #sync_common_user_directories
+    #sync_ssh_config_and_keys
     #sync_data_filesystem
     #sync_gnupg_config_and_keys
 
