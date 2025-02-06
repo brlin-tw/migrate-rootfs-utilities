@@ -4,11 +4,7 @@
 # Copyright 2025 林博仁(Buo-ren Lin) <buo.ren.lin@gmail.com>
 # SPDX-License-Identifier: AGPL-3.0-or-later
 USER=brlin
-USER_HOME_DIR="$(
-    getent passwd "${USER}" \
-        | cut --delimiter=: --fields=6
-)"
-DESTINATION_ADDR=root@brlin-Vostro-5481.local
+DESTINATION_HOMEDIR_SPEC="${DESTINATION_HOMEDIR_SPEC:-unset}"
 COMMON_RSYNC_OPTIONS=(
     --archive
     --acls
@@ -27,22 +23,6 @@ COMMON_RSYNC_OPTIONS=(
     --progress
     --verbose
     --xattrs
-)
-
-# We can't delete excluded files here as we don't want to remove the
-# previously synced workspace dir
-USER_DIRS_RSYNC_OPTIONS=(
-    "${COMMON_RSYNC_OPTIONS[@]}"
-    --checksum
-    --delete
-    --delete-after
-    --delete-excluded
-
-    --exclude .vagrant/
-    --exclude cache/
-    --exclude .cache/
-    --exclude "${USER_HOME_DIR}/下載/Telegram Desktop/**"
-    --exclude "${USER_HOME_DIR}/文件/工作空間/"
 )
 
 SSH_RSYNC_OPTIONS=(
@@ -68,10 +48,19 @@ set \
 set \
     -o nounset
 
+shopt -s nullglob
+
 init(){
     if test "$(id --user)" != 0; then
         printf \
             'Error: This program should be run as the superuser(root).\n' \
+            1>&2
+        exit 1
+    fi
+
+    if test "${DESTINATION_HOMEDIR_SPEC}" == unset; then
+        printf \
+            'Error: The DESTINATION_HOMEDIR_SPEC parameter is not set.\n' \
             1>&2
         exit 1
     fi
@@ -86,7 +75,25 @@ init(){
         exit 2
     fi
 
-    #sync_common_user_directories
+    if ! user_home_dir="$(
+        getent passwd "${USER}" \
+            | cut --delimiter=: --fields=6
+        )"; then
+        printf \
+            'Error: Unable to parse the local user home directory.\n' \
+            1>&2
+        exit 2
+    fi
+
+    if ! sync_common_user_directories \
+        "${USER}" \
+        "${DESTINATION_HOMEDIR_SPEC}"; then
+        printf \
+            'Error: Unable to sync common user directories.\n' \
+            1>&2
+        exit 2
+    fi
+
     #sync_ssh_config_and_keys
     #sync_data_filesystem
     #sync_gnupg_config_and_keys
@@ -186,26 +193,102 @@ determine_elapsed_time(){
 }
 
 sync_common_user_directories(){
+    local user_home_dir="${1}"; shift 1
+    local destination_homedir_spec="${1}"; shift 1
+
     printf 'Info: Syncing common user directories...\n'
-    # FIXME: Hardcoded user dir names, should check config
-    for common_user_dir in \
-        下載 \
-        公共 \
-        圖片 \
-        影片 \
-        文件 \
-        桌面 \
-        模板 \
-        軟體 \
-        音樂
-        do
-        if ! test -e "${USER_HOME_DIR}/${common_user_dir}"; then
+
+    user_dirs_file="${user_home_dir}/.config/user-dirs.dirs"
+    if ! test -e "${user_dirs_file}"; then
+        printf \
+            '%s: Error: This function requires the user-dirs definition file to exist.\n' \
+            "${FUNCNAME[0]}" \
+            1>&2
+        return 1
+    fi
+
+    # Otherwise we'll get root's paths
+    HOME="${user_home_dir}"
+
+    # out of scope
+    # shellcheck source=/dev/null
+    if ! source "${user_dirs_file}"; then
+        printf \
+            '%s: Error: Unable to source the user directories definition file.\n' \\
+            "${FUNCNAME[0]}" \
+            1>&2
+        return 2
+    fi
+
+    user_dirs=()
+    user_dirs_vars=(
+        XDG_DESKTOP_DIR
+        XDG_DOCUMENTS_DIR
+        XDG_DOWNLOAD_DIR
+        XDG_MUSIC_DIR
+        XDG_PICTURES_DIR
+        XDG_PUBLICSHARE_DIR
+        XDG_TEMPLATES_DIR
+        XDG_VIDEOS_DIR
+    )
+    for var in "${user_dirs_vars[@]}"; do
+        # Variable may not be defined
+        if ! test -v "${var}"; then
             continue
         fi
-        rsync \
-            "${USER_DIRS_RSYNC_OPTIONS[@]}" \
-            "${USER_HOME_DIR}/${common_user_dir}" \
-            "${DESTINATION_ADDR}:/mnt/data/"
+
+        value="${!var}"
+        canonical_path="$(realpath "${value}")"
+        canonical_home="$(realpath "${user_home_dir}")"
+
+        # Variable may be set to $HOME when the folder is once missing
+        if test "${canonical_path}" == "${canonical_home}"; then
+            printf \
+                'Warning: The "%s" user directory is a fallback directory, skipping...\n' \
+                "${value}"
+            continue
+        fi
+
+        user_dirs+=("${!var}")
+    done
+
+    # We can't delete excluded files here as we don't want to remove the
+    # previously synced workspace dir
+    user_dirs_rsync_options=(
+        "${COMMON_RSYNC_OPTIONS[@]}"
+        --checksum
+        --delete
+        --delete-after
+        --delete-excluded
+
+        --exclude .vagrant/
+        --exclude cache/
+        --exclude .cache/
+        --exclude "${user_home_dir}/下載/Telegram Desktop/**"
+        --exclude "${user_home_dir}/文件/工作空間/"
+    )
+
+    for dir in "${user_dirs[@]}"; do
+        if ! test -e "${dir}"; then
+            continue
+        fi
+
+        dir_name="${dir##*/}"
+
+        printf \
+            'Info: Syncing the %s user directory...\n' \
+            "${dir_name}"
+
+        if ! rsync \
+            "${user_dirs_rsync_options[@]}" \
+            "${dir}/" \
+            "${destination_homedir_spec}/${dir_name}"; then
+            printf \
+                'Error: Unable to sync the "%s" user directory.\n' \
+                "${dir_name}" \
+                1>&2
+            return 2
+        fi
     done
 }
 
