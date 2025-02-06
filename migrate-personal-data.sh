@@ -40,6 +40,13 @@ GNUPG_RSYNC_OPTIONS=(
     --delete-excluded
 )
 
+STEAM_RSYNC_OPTIONS=(
+    "${COMMON_RSYNC_OPTIONS[@]}"
+    --delete
+    --delete-after
+    --delete-excluded
+)
+
 set \
     -o errexit \
     -o errtrace \
@@ -90,6 +97,16 @@ init(){
         "${DESTINATION_HOMEDIR_SPEC}"; then
         printf \
             'Error: Unable to sync common user directories.\n' \
+            1>&2
+        exit 2
+    fi
+
+    if ! sync_steam_library \
+        "${user_home_dir}" \
+        "${DESTINATION_HOMEDIR_SPEC}" \
+        "${STEAM_RSYNC_OPTIONS[@]}"; then
+        printf \
+            'Error: Unable to sync Steam library.\n' \
             1>&2
         exit 2
     fi
@@ -290,6 +307,33 @@ sync_common_user_directories(){
             return 2
         fi
     done
+}
+
+sync_steam_library(){
+    local user_home_dir="${1}"; shift 1
+    local destination_homedir_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    steam_library_dir="${user_home_dir}/.local/share/Steam"
+    if ! test -e "${steam_library_dir}"; then
+        printf \
+            'Warning: Steam library not found, skipping...\n' \
+            1>&2
+        return 0
+    fi
+
+    printf \
+        'Info: Syncing Steam library...\n'
+
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${steam_library_dir}/" \
+        "${destination_homedir_spec}/.local/share/Steam"; then
+        printf \
+            'Error: Unable to sync the Steam library.\n' \
+            1>&2
+        return 2
+    fi
 }
 
 sync_ssh_config_and_keys(){
