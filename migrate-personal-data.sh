@@ -13,6 +13,7 @@ ENABLE_SYNC_USER_DIRS="${ENABLE_SYNC_USER_DIRS:-true}"
 ENABLE_SYNC_STEAM_LIBRARY="${ENABLE_SYNC_STEAM_LIBRARY:-true}"
 ENABLE_SYNC_SSH_CONFIG_KEYS="${ENABLE_SYNC_SSH_CONFIG_KEYS:-true}"
 ENABLE_SYNC_DATAFS="${ENABLE_SYNC_DATAFS:-true}"
+ENABLE_SYNC_GPG_CONFIG_KEYS="${ENABLE_SYNC_GPG_CONFIG_KEYS:-true}"
 
 COMMON_RSYNC_OPTIONS=(
     --archive
@@ -40,13 +41,6 @@ SSH_RSYNC_OPTIONS=(
 
 DATA_RSYNC_OPTIONS=(
     "${COMMON_RSYNC_OPTIONS[@]}"
-)
-
-GNUPG_RSYNC_OPTIONS=(
-    "${COMMON_RSYNC_OPTIONS[@]}"
-    --delete
-    --delete-after
-    --delete-excluded
 )
 
 STEAM_RSYNC_OPTIONS=(
@@ -97,6 +91,7 @@ init(){
         ENABLE_SYNC_STEAM_LIBRARY
         ENABLE_SYNC_SSH_CONFIG_KEYS
         ENABLE_SYNC_DATAFS
+        ENABLE_SYNC_GPG_CONFIG_KEYS
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -177,7 +172,14 @@ init(){
         fi
     fi
 
-    #sync_gnupg_config_and_keys
+    if test "${ENABLE_SYNC_GPG_CONFIG_KEYS}" == true; then
+        if ! sync_gnupg_config_and_keys \
+            "${user_home_dir}" \
+            "${DESTINATION_HOMEDIR_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            exit 2
+        fi
+    fi
 
     if ! end_timestamp="$(printf '%(%s)T')"; then
         printf \
@@ -443,11 +445,30 @@ sync_data_filesystem(){
 }
 
 sync_gnupg_config_and_keys(){
+    local user_home_dir="${1}"; shift 1
+    local destination_homedir_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); shift --
+
     printf 'Info: Syncing GnuPG configuration and keys...\n'
-    rsync \
-        "${GNUPG_RSYNC_OPTIONS[@]}" \
-        "${USER_HOME_DIR}"/.gnupg \
-        "${DESTINATION_ADDR}:"
+    local gpg_home_dir="${user_home_dir}/.gnupg"
+
+    if ! test -e "${gpg_home_dir}"; then
+        printf \
+            "%s: Warning: The GnuPG home directory isn't exist, skipping...\\n" \
+            "${FUNCNAME[0]}" \
+            1>&2
+        return 0
+    fi
+
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${gpg_home_dir}/" \
+        "${destination_homedir_spec}/.gnupg/"; then
+        printf \
+            'Error: Unable to sync the GnuPG configuration and keys.\n' \
+            1>&2
+        return 2
+    fi
 }
 
 init
