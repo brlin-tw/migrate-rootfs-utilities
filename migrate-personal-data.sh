@@ -7,6 +7,7 @@ USER=brlin
 DESTINATION_HOMEDIR_SPEC="${DESTINATION_HOMEDIR_SPEC:-unset}"
 
 ENABLE_SYNC_USER_DIRS="${ENABLE_SYNC_USER_DIRS:-true}"
+ENABLE_SYNC_STEAM_LIBRARY="${ENABLE_SYNC_STEAM_LIBRARY:-true}"
 
 COMMON_RSYNC_OPTIONS=(
     --archive
@@ -80,6 +81,7 @@ init(){
     local regex_boolean_values='^(true|false)$'
     local -a boolean_parameters=(
         ENABLE_SYNC_USER_DIRS
+        ENABLE_SYNC_STEAM_LIBRARY
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -130,14 +132,16 @@ init(){
         fi
     fi
 
-    if ! sync_steam_library \
-        "${user_home_dir}" \
-        "${DESTINATION_HOMEDIR_SPEC}" \
-        "${STEAM_RSYNC_OPTIONS[@]}"; then
-        printf \
-            'Error: Unable to sync Steam library.\n' \
-            1>&2
-        exit 2
+    if test "${ENABLE_SYNC_STEAM_LIBRARY}" == true; then
+        if ! sync_steam_library \
+            "${user_home_dir}" \
+            "${DESTINATION_HOMEDIR_SPEC}" \
+            "${STEAM_RSYNC_OPTIONS[@]}"; then
+            printf \
+                'Error: Unable to sync Steam library.\n' \
+                1>&2
+            exit 2
+        fi
     fi
 
     if ! sync_ssh_config_and_keys \
