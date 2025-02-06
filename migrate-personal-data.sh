@@ -8,6 +8,7 @@ DESTINATION_HOMEDIR_SPEC="${DESTINATION_HOMEDIR_SPEC:-unset}"
 
 ENABLE_SYNC_USER_DIRS="${ENABLE_SYNC_USER_DIRS:-true}"
 ENABLE_SYNC_STEAM_LIBRARY="${ENABLE_SYNC_STEAM_LIBRARY:-true}"
+ENABLE_SYNC_SSH_CONFIG_KEYS="${ENABLE_SYNC_SSH_CONFIG_KEYS:-true}"
 
 COMMON_RSYNC_OPTIONS=(
     --archive
@@ -82,6 +83,7 @@ init(){
     local -a boolean_parameters=(
         ENABLE_SYNC_USER_DIRS
         ENABLE_SYNC_STEAM_LIBRARY
+        ENABLE_SYNC_SSH_CONFIG_KEYS
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -144,11 +146,13 @@ init(){
         fi
     fi
 
-    if ! sync_ssh_config_and_keys \
-        "${user_home_dir}" \
-        "${DESTINATION_HOMEDIR_SPEC}" \
-        "${SSH_RSYNC_OPTIONS[@]}"; then
-        exit 2
+    if test "${ENABLE_SYNC_SSH_CONFIG_KEYS}" == true; then
+        if ! sync_ssh_config_and_keys \
+            "${user_home_dir}" \
+            "${DESTINATION_HOMEDIR_SPEC}" \
+            "${SSH_RSYNC_OPTIONS[@]}"; then
+            exit 2
+        fi
     fi
 
     #sync_data_filesystem
