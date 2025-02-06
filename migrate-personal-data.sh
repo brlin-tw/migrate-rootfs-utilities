@@ -35,14 +35,6 @@ COMMON_RSYNC_OPTIONS=(
     --xattrs
 )
 
-SSH_RSYNC_OPTIONS=(
-    "${COMMON_RSYNC_OPTIONS[@]}"
-)
-
-DATA_RSYNC_OPTIONS=(
-    "${COMMON_RSYNC_OPTIONS[@]}"
-)
-
 STEAM_RSYNC_OPTIONS=(
     "${COMMON_RSYNC_OPTIONS[@]}"
     --delete
@@ -158,7 +150,7 @@ init(){
         if ! sync_ssh_config_and_keys \
             "${user_home_dir}" \
             "${DESTINATION_HOMEDIR_SPEC}" \
-            "${SSH_RSYNC_OPTIONS[@]}"; then
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
             exit 2
         fi
     fi
