@@ -92,7 +92,7 @@ init(){
         exit 2
     fi
 
-    if ! sync_common_user_directories \
+    if ! sync_user_dirs \
         "${user_home_dir}" \
         "${DESTINATION_HOMEDIR_SPEC}"; then
         printf \
@@ -215,7 +215,7 @@ determine_elapsed_time(){
     fi
 }
 
-sync_common_user_directories(){
+sync_user_dirs(){
     local user_home_dir="${1}"; shift 1
     local destination_homedir_spec="${1}"; shift 1
 
