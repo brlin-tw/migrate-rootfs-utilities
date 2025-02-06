@@ -42,7 +42,7 @@ set \
 init(){
     printf \
         'Info: Checking runtime parameters...\n'
-    if test "$(id --user)" != 0; then
+    if test "${EUID}" != 0; then
         printf \
             'Error: This program should be run as the superuser(root).\n' \
             1>&2
