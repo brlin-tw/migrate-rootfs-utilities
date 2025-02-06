@@ -40,6 +40,8 @@ set \
     -o nounset
 
 init(){
+    printf \
+        'Info: Checking runtime parameters...\n'
     if test "$(id --user)" != 0; then
         printf \
             'Error: This program should be run as the superuser(root).\n' \
