@@ -7,10 +7,12 @@ USER=brlin
 
 DESTINATION_ROOTFS_SPEC="${DESTINATION_ROOTFS_SPEC:-unset}"
 DESTINATION_HOMEDIR_SPEC="${DESTINATION_HOMEDIR_SPEC:-auto}"
+DESTINATION_DATAFS_SPEC="${DESTINATION_DATAFS_SPEC:-auto}"
 
 ENABLE_SYNC_USER_DIRS="${ENABLE_SYNC_USER_DIRS:-true}"
 ENABLE_SYNC_STEAM_LIBRARY="${ENABLE_SYNC_STEAM_LIBRARY:-true}"
 ENABLE_SYNC_SSH_CONFIG_KEYS="${ENABLE_SYNC_SSH_CONFIG_KEYS:-true}"
+ENABLE_SYNC_DATAFS="${ENABLE_SYNC_DATAFS:-true}"
 
 COMMON_RSYNC_OPTIONS=(
     --archive
@@ -85,11 +87,16 @@ init(){
         DESTINATION_HOMEDIR_SPEC="${DESTINATION_ROOTFS_SPEC}/home/${USER}"
     fi
 
+    if test "${DESTINATION_DATAFS_SPEC}" == auto; then
+        DESTINATION_DATAFS_SPEC="${DESTINATION_ROOTFS_SPEC}/mnt/data"
+    fi
+
     local regex_boolean_values='^(true|false)$'
     local -a boolean_parameters=(
         ENABLE_SYNC_USER_DIRS
         ENABLE_SYNC_STEAM_LIBRARY
         ENABLE_SYNC_SSH_CONFIG_KEYS
+        ENABLE_SYNC_DATAFS
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -161,7 +168,15 @@ init(){
         fi
     fi
 
-    #sync_data_filesystem
+    if test "${ENABLE_SYNC_DATAFS}" == true \
+        && test "${DESTINATION_DATAFS_SPEC}" != unset; then
+        if ! sync_data_filesystem \
+            "${DESTINATION_DATAFS_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            exit 2
+        fi
+    fi
+
     #sync_gnupg_config_and_keys
 
     if ! end_timestamp="$(printf '%(%s)T')"; then
@@ -403,11 +418,28 @@ sync_ssh_config_and_keys(){
 }
 
 sync_data_filesystem(){
+    local destination_datafs_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
     printf 'Info: Syncing data filesystem...\n'
-    rsync \
-        "${DATA_RSYNC_OPTIONS[@]}" \
-        /media/brlin/Ubuntu/ \
-        "${DESTINATION_ADDR}:/mnt/data/"
+    local datafs_dir=/mnt/data
+    if ! test -e "${datafs_dir}"; then
+        printf \
+            '%s: Warning: Data filesystem not found, skipping...\n' \
+            "${FUNCNAME[0]}" \
+            1>&2
+        return 0
+    fi
+
+    if ! rsync \
+        "${rsync_options[@]}" \
+        /mnt/data/ \
+        "${destination_datafs_spec}/"; then
+        printf \
+            'Error: Unable to sync the data filesystem.\n' \
+            1>&2
+        return 2
+    fi
 }
 
 sync_gnupg_config_and_keys(){
