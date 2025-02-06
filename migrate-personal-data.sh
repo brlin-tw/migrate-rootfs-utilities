@@ -111,7 +111,13 @@ init(){
         exit 2
     fi
 
-    #sync_ssh_config_and_keys
+    if ! sync_ssh_config_and_keys \
+        "${user_home_dir}" \
+        "${DESTINATION_HOMEDIR_SPEC}" \
+        "${SSH_RSYNC_OPTIONS[@]}"; then
+        exit 2
+    fi
+
     #sync_data_filesystem
     #sync_gnupg_config_and_keys
 
@@ -337,11 +343,20 @@ sync_steam_library(){
 }
 
 sync_ssh_config_and_keys(){
+    local user_home_dir="${1}"; shift 1
+    local destination_homedir_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
     printf 'Info: Syncing SSH configuration and keys...\n'
-    rsync \
-        "${SSH_RSYNC_OPTIONS[@]}" \
-        "${USER_HOME_DIR}"/.ssh \
-        "${DESTINATION_ADDR}:${USER_HOME_DIR}/"
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${user_home_dir}/.ssh/" \
+        "${destination_homedir_spec}/.ssh"; then
+        printf \
+            'Error: Unable to sync the SSH configuration and keys.\n' \
+            1>&2
+        return 2
+    fi
 }
 
 sync_data_filesystem(){
