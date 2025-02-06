@@ -93,7 +93,7 @@ init(){
     fi
 
     if ! sync_common_user_directories \
-        "${USER}" \
+        "${user_home_dir}" \
         "${DESTINATION_HOMEDIR_SPEC}"; then
         printf \
             'Error: Unable to sync common user directories.\n' \
