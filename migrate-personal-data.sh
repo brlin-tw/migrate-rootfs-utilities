@@ -33,10 +33,7 @@ COMMON_RSYNC_OPTIONS=(
     --progress
     --verbose
     --xattrs
-)
 
-STEAM_RSYNC_OPTIONS=(
-    "${COMMON_RSYNC_OPTIONS[@]}"
     --delete
     --delete-after
     --delete-excluded
@@ -138,7 +135,7 @@ init(){
         if ! sync_steam_library \
             "${user_home_dir}" \
             "${DESTINATION_HOMEDIR_SPEC}" \
-            "${STEAM_RSYNC_OPTIONS[@]}"; then
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
             printf \
                 'Error: Unable to sync Steam library.\n' \
                 1>&2
