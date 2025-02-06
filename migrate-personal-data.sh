@@ -4,7 +4,9 @@
 # Copyright 2025 林博仁(Buo-ren Lin) <buo.ren.lin@gmail.com>
 # SPDX-License-Identifier: AGPL-3.0-or-later
 USER=brlin
-DESTINATION_HOMEDIR_SPEC="${DESTINATION_HOMEDIR_SPEC:-unset}"
+
+DESTINATION_ROOTFS_SPEC="${DESTINATION_ROOTFS_SPEC:-unset}"
+DESTINATION_HOMEDIR_SPEC="${DESTINATION_HOMEDIR_SPEC:-auto}"
 
 ENABLE_SYNC_USER_DIRS="${ENABLE_SYNC_USER_DIRS:-true}"
 ENABLE_SYNC_STEAM_LIBRARY="${ENABLE_SYNC_STEAM_LIBRARY:-true}"
@@ -72,11 +74,15 @@ init(){
         exit 1
     fi
 
-    if test "${DESTINATION_HOMEDIR_SPEC}" == unset; then
+    if test "${DESTINATION_ROOTFS_SPEC}" == unset; then
         printf \
-            'Error: The DESTINATION_HOMEDIR_SPEC parameter is not set.\n' \
+            'Error: The DESTINATION_ROOTFS_SPEC parameter is not set.\n' \
             1>&2
         exit 1
+    fi
+
+    if test "${DESTINATION_HOMEDIR_SPEC}" == auto; then
+        DESTINATION_HOMEDIR_SPEC="${DESTINATION_ROOTFS_SPEC}/home/${USER}"
     fi
 
     local regex_boolean_values='^(true|false)$'
