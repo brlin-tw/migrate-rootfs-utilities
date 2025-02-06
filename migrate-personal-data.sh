@@ -5,6 +5,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 USER=brlin
 DESTINATION_HOMEDIR_SPEC="${DESTINATION_HOMEDIR_SPEC:-unset}"
+
+ENABLE_SYNC_USER_DIRS="${ENABLE_SYNC_USER_DIRS:-true}"
+
 COMMON_RSYNC_OPTIONS=(
     --archive
     --acls
@@ -72,6 +75,28 @@ init(){
         exit 1
     fi
 
+    local regex_boolean_values='^(true|false)$'
+    local -a boolean_parameters=(
+        ENABLE_SYNC_USER_DIRS
+    )
+    local validate_failed=false
+    for param in "${boolean_parameters[@]}"; do
+        if ! [[ "${!param}" =~ ${regex_boolean_values} ]]; then
+            printf \
+                'Error: Invalid value of the boolean parameter %s(%s).\n' \
+                "${param}" \
+                "${!param}" \
+                1>&2
+            validate_failed=true
+        fi
+    done
+    if test "${validate_failed}" == true; then
+        printf \
+            'Error: Booleans parameter validation failed.\n' \
+            1>&2
+        exit 1
+    fi
+
     local -i \
         start_timestamp \
         end_timestamp
@@ -92,13 +117,15 @@ init(){
         exit 2
     fi
 
-    if ! sync_user_dirs \
-        "${user_home_dir}" \
-        "${DESTINATION_HOMEDIR_SPEC}"; then
-        printf \
-            'Error: Unable to sync common user directories.\n' \
-            1>&2
-        exit 2
+    if test "${ENABLE_SYNC_USER_DIRS}" == true; then
+        if ! sync_user_dirs \
+            "${user_home_dir}" \
+            "${DESTINATION_HOMEDIR_SPEC}"; then
+            printf \
+                'Error: Unable to sync common user directories.\n' \
+                1>&2
+            exit 2
+        fi
     fi
 
     if ! sync_steam_library \
