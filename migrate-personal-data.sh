@@ -39,16 +39,6 @@ COMMON_RSYNC_OPTIONS=(
     --delete-excluded
 )
 
-set \
-    -o errexit \
-    -o errtrace \
-    -o pipefail
-
-set \
-    -o nounset
-
-shopt -s nullglob
-
 init(){
     printf \
         'Info: Checking runtime parameters...\n'
@@ -424,5 +414,29 @@ sync_gnupg_config_and_keys(){
         return 2
     fi
 }
+
+printf \
+    'Info: Configuring the defensive interpreter behaviors...\n'
+set_opts=(
+    -o errexit
+    -o errtrace
+    -o pipefail
+    -o nounset
+)
+if ! set "${set_opts[@]}"; then
+    printf \
+        'Error: Unable to configure the defensive interpreter behaviors.\n' \
+        1>&2
+    exit 2
+fi
+
+printf \
+    'Info: Configuring the nullglob shell option...\n'
+if ! shopt -s nullglob; then
+    printf \
+        'Error: Unable to configure the nullglob shell option.\n' \
+        1>&2
+    exit 2
+fi
 
 init

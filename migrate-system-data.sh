@@ -35,14 +35,6 @@ WIREGUARD_RSYNC_OPTIONS=(
     --delete-excluded
 )
 
-set \
-    -o errexit \
-    -o errtrace \
-    -o pipefail
-
-set \
-    -o nounset
-
 init(){
     printf \
         'Info: Checking runtime parameters...\n'
@@ -215,5 +207,20 @@ sync_udpraw_installation(){
         return 2
     fi
 }
+
+printf \
+    'Info: Configuring the defensive interpreter behaviors...\n'
+set_opts=(
+    -o errexit
+    -o errtrace
+    -o pipefail
+    -o nounset
+)
+if ! set "${set_opts[@]}"; then
+    printf \
+        'Error: Unable to configure the defensive interpreter behaviors.\n' \
+        1>&2
+    exit 2
+fi
 
 init
