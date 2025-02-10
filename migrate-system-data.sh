@@ -49,6 +49,16 @@ init(){
         exit 1
     fi
 
+    printf \
+        'Info: Loading the functions file...\n'
+    # shellcheck source=SCRIPTDIR
+    if ! source "${script_dir}/functions.sh.source"; then
+        printf \
+            'Error: Unable to load the functions file.\n' \
+            1>&2
+        exit 2
+    fi
+
     local -i \
         start_timestamp \
         end_timestamp
@@ -108,51 +118,6 @@ trap trap_err ERR
         script_name="${script_filename%%.*}"
         script_basecommand="${0}"
         script_args=("${@}")
-    fi
-}
-
-determine_elapsed_time(){
-    local -i start_timestamp="${1}"; shift
-    local -i end_timestamp="${1}"; shift
-
-    elapsed_seconds="$((end_timestamp - start_timestamp))"
-
-    elapsed_minutes="$((elapsed_seconds / 60))"
-    elapsed_seconds="$((elapsed_seconds % 60))"
-
-    elapsed_hours="$((elapsed_minutes / 60))"
-    elapsed_minutes="$((elapsed_minutes % 60))"
-
-    elapsed_days="$((elapsed_hours / 24))"
-    elapsed_hours="$((elapsed_hours % 24))"
-
-    local flag_more_than_one_minute=false
-    if test "${elapsed_days}" -ne 0; then
-        flag_more_than_one_minute=true
-        printf \
-            '%s days, ' \
-            "${elapsed_days}"
-    fi
-    if test "${elapsed_hours}" -ne 0; then
-        flag_more_than_one_minute=true
-        printf \
-            '%s hours, ' \
-            "${elapsed_hours}"
-    fi
-    if test "${elapsed_minutes}" -ne 0; then
-        flag_more_than_one_minute=true
-        printf \
-            '%s minutes, ' \
-            "${elapsed_minutes}"
-    fi
-    if test "${flag_more_than_one_minute}" == false; then
-        printf \
-            '%s seconds' \
-            "${elapsed_seconds}"
-    else
-        printf \
-            'and %s seconds' \
-            "${elapsed_seconds}"
     fi
 }
 
