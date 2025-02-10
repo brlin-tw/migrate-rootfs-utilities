@@ -6,6 +6,7 @@
 DESTINATION_ROOTFS_SPEC="${DESTINATION_ROOTFS_SPEC:-unset}"
 
 ENABLE_SYNC_WIREGUARD_CONFIG="${ENABLE_SYNC_WIREGUARD_CONFIG:-true}"
+ENABLE_SYNC_UDP2RAW_INSTALLATION="${ENABLE_SYNC_UDP2RAW_INSTALLATION:-true}"
 
 COMMON_RSYNC_OPTIONS=(
     --archive
@@ -62,6 +63,7 @@ init(){
     local regex_boolean_values='^(true|false)$'
     local -a boolean_parameters=(
         ENABLE_SYNC_WIREGUARD_CONFIG
+        ENABLE_SYNC_UDP2RAW_INSTALLATION
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -112,7 +114,16 @@ init(){
         fi
     fi
 
-    #sync_udpraw_installation
+    if test "${ENABLE_SYNC_UDP2RAW_INSTALLATION}" == true; then
+        if ! sync_udpraw_installation \
+            "${DESTINATION_ROOTFS_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            printf \
+                'Error: Unable to sync the udp2raw installation.\n' \
+                1>&2
+            exit 2
+        fi
+    fi
 
     if ! end_timestamp="$(printf '%(%s)T')"; then
         printf \
@@ -185,11 +196,24 @@ sync_wireguard_configuration(){
 }
 
 sync_udpraw_installation(){
-    printf 'Info: Syncing udp2raw installation...\n'
-    rsync \
-        "${COMMON_RSYNC_OPTIONS[@]}" \
-        /opt/udp2raw \
-        "${DESTINATION_ADDR}:/opt"
+    local destination_rootfs_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    local udp2raw_installation_dir=/opt/udp2raw
+    if ! test -e "${udp2raw_installation_dir}"; then
+        return 0
+    fi
+
+    printf 'Info: Syncing the udp2raw installation...\n'
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${udp2raw_installation_dir}" \
+        "${destination_rootfs_spec}/opt"; then
+        printf \
+            'Error: Unable to sync the udp2raw installation.\n' \
+            1>&2
+        return 2
+    fi
 }
 
 init
