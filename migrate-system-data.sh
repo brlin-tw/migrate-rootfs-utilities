@@ -51,7 +51,7 @@ init(){
 
     printf \
         'Info: Loading the functions file...\n'
-    # shellcheck source=SCRIPTDIR
+    # shellcheck source-path=SCRIPTDIR
     if ! source "${script_dir}/functions.sh.source"; then
         printf \
             'Error: Unable to load the functions file.\n' \
