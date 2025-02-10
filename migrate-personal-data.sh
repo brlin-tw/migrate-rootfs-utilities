@@ -401,7 +401,7 @@ sync_data_filesystem(){
 sync_gnupg_config_and_keys(){
     local user_home_dir="${1}"; shift 1
     local destination_homedir_spec="${1}"; shift 1
-    local -a rsync_options=("${@}"); shift --
+    local -a rsync_options=("${@}"); set --
 
     printf 'Info: Syncing GnuPG configuration and keys...\n'
     local gpg_home_dir="${user_home_dir}/.gnupg"
