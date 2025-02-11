@@ -8,6 +8,7 @@ DESTINATION_ROOTFS_SPEC="${DESTINATION_ROOTFS_SPEC:-unset}"
 ENABLE_SYNC_WIREGUARD_CONFIG="${ENABLE_SYNC_WIREGUARD_CONFIG:-true}"
 ENABLE_SYNC_UDP2RAW_INSTALLATION="${ENABLE_SYNC_UDP2RAW_INSTALLATION:-true}"
 ENABLE_SYNC_BLUETOOTHD_DATA="${ENABLE_SYNC_BLUETOOTHD_DATA:-true}"
+ENABLE_SYNC_NETPLAN_CONFIG="${ENABLE_SYNC_NETPLAN_CONFIG:-true}"
 
 COMMON_RSYNC_OPTIONS=(
     --archive
@@ -58,6 +59,7 @@ init(){
         ENABLE_SYNC_WIREGUARD_CONFIG
         ENABLE_SYNC_UDP2RAW_INSTALLATION
         ENABLE_SYNC_BLUETOOTHD_DATA
+        ENABLE_SYNC_NETPLAN_CONFIG
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -125,6 +127,17 @@ init(){
             "${COMMON_RSYNC_OPTIONS[@]}"; then
             printf \
                 'Error: Unable to sync the bluetooth daemon data.\n' \
+                1>&2
+            exit 2
+        fi
+    fi
+
+    if test "${ENABLE_SYNC_NETPLAN_CONFIG}" == true; then
+        if ! sync_netplan_config \
+            "${DESTINATION_ROOTFS_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            printf \
+                'Error: Unable to sync the Netplan configuration files.\n' \
                 1>&2
             exit 2
         fi
@@ -238,6 +251,28 @@ sync_bluetoothd_data(){
         "${destination_rootfs_spec}${bluetoothd_data_dir}"; then
         printf \
             'Error: Unable to sync the bluetooth daemon data.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_netplan_config(){
+    local destination_rootfs_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    local netplan_config_dir=/etc/netplan
+    if ! test -e "${netplan_config_dir}"; then
+        return 0
+    fi
+
+    printf \
+        'Info: Syncing the Netplan configuration files...\n'
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${netplan_config_dir}/" \
+        "${destination_rootfs_spec}${netplan_config_dir}"; then
+        printf \
+            'Error: Unable to sync the Netplan configuration files.\n' \
             1>&2
         return 2
     fi
