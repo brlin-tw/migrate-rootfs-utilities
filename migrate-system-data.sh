@@ -7,6 +7,7 @@ DESTINATION_ROOTFS_SPEC="${DESTINATION_ROOTFS_SPEC:-unset}"
 
 ENABLE_SYNC_WIREGUARD_CONFIG="${ENABLE_SYNC_WIREGUARD_CONFIG:-true}"
 ENABLE_SYNC_UDP2RAW_INSTALLATION="${ENABLE_SYNC_UDP2RAW_INSTALLATION:-true}"
+ENABLE_SYNC_BLUETOOTHD_DATA="${ENABLE_SYNC_BLUETOOTHD_DATA:-true}"
 
 COMMON_RSYNC_OPTIONS=(
     --archive
@@ -56,6 +57,7 @@ init(){
     local -a boolean_parameters=(
         ENABLE_SYNC_WIREGUARD_CONFIG
         ENABLE_SYNC_UDP2RAW_INSTALLATION
+        ENABLE_SYNC_BLUETOOTHD_DATA
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -112,6 +114,17 @@ init(){
             "${COMMON_RSYNC_OPTIONS[@]}"; then
             printf \
                 'Error: Unable to sync the udp2raw installation.\n' \
+                1>&2
+            exit 2
+        fi
+    fi
+
+    if test "${ENABLE_SYNC_BLUETOOTHD_DATA}" == true; then
+        if ! sync_bluetoothd_data \
+            "${DESTINATION_ROOTFS_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            printf \
+                'Error: Unable to sync the bluetooth daemon data.\n' \
                 1>&2
             exit 2
         fi
@@ -203,6 +216,28 @@ sync_udpraw_installation(){
         "${destination_rootfs_spec}/opt"; then
         printf \
             'Error: Unable to sync the udp2raw installation.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_bluetoothd_data(){
+    local destination_rootfs_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    local bluetoothd_data_dir=/var/lib/bluetooth
+    if ! test -e "${bluetoothd_data_dir}"; then
+        return 0
+    fi
+
+    printf \
+        'Info: Syncing the bluetooth daemon data...\n'
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${bluetoothd_data_dir}/" \
+        "${destination_rootfs_spec}${bluetoothd_data_dir}"; then
+        printf \
+            'Error: Unable to sync the bluetooth daemon data.\n' \
             1>&2
         return 2
     fi
