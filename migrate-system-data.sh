@@ -9,6 +9,7 @@ ENABLE_SYNC_WIREGUARD_CONFIG="${ENABLE_SYNC_WIREGUARD_CONFIG:-true}"
 ENABLE_SYNC_UDP2RAW_INSTALLATION="${ENABLE_SYNC_UDP2RAW_INSTALLATION:-true}"
 ENABLE_SYNC_BLUETOOTHD_DATA="${ENABLE_SYNC_BLUETOOTHD_DATA:-true}"
 ENABLE_SYNC_NETPLAN_CONFIG="${ENABLE_SYNC_NETPLAN_CONFIG:-true}"
+ENABLE_SYNC_FPRINTD_DATA="${ENABLE_SYNC_FPRINTD_DATA:-true}"
 
 COMMON_RSYNC_OPTIONS=(
     --archive
@@ -60,6 +61,7 @@ init(){
         ENABLE_SYNC_UDP2RAW_INSTALLATION
         ENABLE_SYNC_BLUETOOTHD_DATA
         ENABLE_SYNC_NETPLAN_CONFIG
+        ENABLE_SYNC_FPRINTD_DATA
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -138,6 +140,17 @@ init(){
             "${COMMON_RSYNC_OPTIONS[@]}"; then
             printf \
                 'Error: Unable to sync the Netplan configuration files.\n' \
+                1>&2
+            exit 2
+        fi
+    fi
+
+    if test "${ENABLE_SYNC_FPRINTD_DATA}" == true; then
+        if ! sync_fprintd_data \
+            "${DESTINATION_ROOTFS_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            printf \
+                'Error: Unable to sync the fingerprint daemon data.\n' \
                 1>&2
             exit 2
         fi
@@ -273,6 +286,28 @@ sync_netplan_config(){
         "${destination_rootfs_spec}${netplan_config_dir}"; then
         printf \
             'Error: Unable to sync the Netplan configuration files.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_fprintd_data(){
+    local destination_rootfs_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    local fprintd_data_dir=/var/lib/fprint
+    if ! test -e "${fprintd_data_dir}"; then
+        return 0
+    fi
+
+    printf \
+        'Info: Syncing the fingerprint daemon data...\n'
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${fprintd_data_dir}/" \
+        "${destination_rootfs_spec}${fprintd_data_dir}"; then
+        printf \
+            'Error: Unable to sync the fingerprint daemon data.\n' \
             1>&2
         return 2
     fi

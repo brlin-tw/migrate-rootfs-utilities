@@ -111,6 +111,13 @@ Whether to sync the Netplan configuration files.  This avoids reconfiguring the 
 **Supported values:** `true`, `false`.  
 **Default value:** `true`.
 
+#### ENABLE_SYNC_FPRINTD_DATA
+
+Whether to sync the fingerprint daemon data.  This avoids reconfiguring fingerprint recognition on the same system.
+
+**Supported values:** `true`, `false`.  
+**Default value:** `true`.
+
 ## Licensing
 
 Unless otherwise noted([comment headers](https://reuse.software/spec-3.3/#comment-headers)/[REUSE.toml](https://reuse.software/spec-3.3/#reusetoml)), this product is licensed under [the 3.0 version of the GNU Affero General Public License](https://www.gnu.org/licenses/agpl-3.0.html), or any of its more recent versions of your preference.
