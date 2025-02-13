@@ -445,11 +445,13 @@ sync_firefox_data(){
     fi
 
     # NOTE: Rsync exit status 24 means "Partial transfer due to vanished source files", which would happen if the browser is running during the synchonization
-    if ! rsync \
-        "${rsync_options[@]}" \
-        "${source_firefox_data_dir}/" \
-        "${destination_firefox_data_dir_spec}" \
-        || test "${?}" == 24; then
+    if ! {
+            rsync \
+            "${rsync_options[@]}" \
+            "${source_firefox_data_dir}/" \
+            "${destination_firefox_data_dir_spec}" \
+            || test "${?}" == 24
+        }; then
         printf \
             'Error: Unable to sync the Firefox data.\n' \
             1>&2
