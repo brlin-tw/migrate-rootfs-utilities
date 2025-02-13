@@ -17,6 +17,7 @@ ENABLE_SYNC_GPG_CONFIG_KEYS="${ENABLE_SYNC_GPG_CONFIG_KEYS:-true}"
 ENABLE_SYNC_FIREFOX_DATA="${ENABLE_SYNC_FIREFOX_DATA:-true}"
 ENABLE_SYNC_BASH_HISTORY="${ENABLE_SYNC_BASH_HISTORY:-true}"
 ENABLE_SYNC_GNOME_KEYRING="${ENABLE_SYNC_GNOME_KEYRING:-true}"
+ENABLE_SYNC_KDE_WALLET="${ENABLE_SYNC_KDE_WALLET:-true}"
 
 COMMON_RSYNC_OPTIONS=(
     --archive
@@ -77,6 +78,7 @@ init(){
         ENABLE_SYNC_FIREFOX_DATA
         ENABLE_SYNC_BASH_HISTORY
         ENABLE_SYNC_GNOME_KEYRING
+        ENABLE_SYNC_KDE_WALLET
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -196,6 +198,15 @@ init(){
 
     if test "${ENABLE_SYNC_GNOME_KEYRING}" == true; then
         if ! sync_gnome_keyring \
+            "${user_home_dir}" \
+            "${DESTINATION_HOMEDIR_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            exit 2
+        fi
+    fi
+
+    if test "${ENABLE_SYNC_KDE_WALLET}" == true; then
+        if ! sync_kde_wallet \
             "${user_home_dir}" \
             "${DESTINATION_HOMEDIR_SPEC}" \
             "${COMMON_RSYNC_OPTIONS[@]}"; then
@@ -534,6 +545,35 @@ sync_gnome_keyring(){
         "${destination_gnome_keyring_data_dir_spec}"; then
         printf \
             'Error: Unable to sync the GNOME keyring.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_kde_wallet(){
+    local user_home_dir="${1}"; shift 1
+    local destination_homedir_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    printf 'Info: Syncing KDE Wallet...\n'
+    local kde_wallet_data_dir_relative=/.local/share/kwalletd
+    local source_kde_wallet_data_dir="${user_home_dir}${kde_wallet_data_dir_relative}"
+    local destination_kde_wallet_data_dir_spec="${destination_homedir_spec}${kde_wallet_data_dir_relative}"
+
+    if ! test -e "${source_kde_wallet_data_dir}"; then
+        printf \
+            "%s: Warning: The KDE Wallet data directory doesn't exist, skipping...\\n" \
+            "${FUNCNAME[0]}" \
+            1>&2
+        return 0
+    fi
+
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${source_kde_wallet_data_dir}" \
+        "${destination_kde_wallet_data_dir_spec}"; then
+        printf \
+            'Error: Unable to sync the KDE Wallet.\n' \
             1>&2
         return 2
     fi

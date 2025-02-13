@@ -100,6 +100,13 @@ Whether to sync the GNOME keyring data.
 **Supported values:** `true`, `false`.  
 **Default value:** `true`.
 
+#### ENABLE_SYNC_KDE_WALLET
+
+Whether to sync the KDE Wallet data.
+
+**Supported values:** `true`, `false`.  
+**Default value:** `true`.
+
 ### migrate-system-data
 
 The following environment variables are only used in the migrate-system-data utility:
@@ -147,6 +154,8 @@ The following materials are referenced during the development of this project:
   Explains the exit status code of the "Partial transfer due to vanished source files" error.
 * [Where does Seahorse/GNOME keyring store its keyrings? - Ask Ubuntu](https://askubuntu.com/questions/96798/where-does-seahorse-gnome-keyring-store-its-keyrings)  
   Explains the path where GNOME keyring store its data.
+* [KDE Wallet - ArchWiki](https://wiki.archlinux.org/title/KDE_Wallet)
+  Explains the path where KDE Wallet store its data.
 
 ## Licensing
 
