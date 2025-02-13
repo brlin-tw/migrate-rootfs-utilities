@@ -541,7 +541,7 @@ sync_gnome_keyring(){
 
     if ! rsync \
         "${rsync_options[@]}" \
-        "${source_gnome_keyring_data_dir}" \
+        "${source_gnome_keyring_data_dir}/" \
         "${destination_gnome_keyring_data_dir_spec}"; then
         printf \
             'Error: Unable to sync the GNOME keyring.\n' \
@@ -570,7 +570,7 @@ sync_kde_wallet(){
 
     if ! rsync \
         "${rsync_options[@]}" \
-        "${source_kde_wallet_data_dir}" \
+        "${source_kde_wallet_data_dir}/" \
         "${destination_kde_wallet_data_dir_spec}"; then
         printf \
             'Error: Unable to sync the KDE Wallet.\n' \
