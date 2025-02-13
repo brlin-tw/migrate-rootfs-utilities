@@ -16,6 +16,7 @@ ENABLE_SYNC_DATAFS="${ENABLE_SYNC_DATAFS:-true}"
 ENABLE_SYNC_GPG_CONFIG_KEYS="${ENABLE_SYNC_GPG_CONFIG_KEYS:-true}"
 ENABLE_SYNC_FIREFOX_DATA="${ENABLE_SYNC_FIREFOX_DATA:-true}"
 ENABLE_SYNC_BASH_HISTORY="${ENABLE_SYNC_BASH_HISTORY:-true}"
+ENABLE_SYNC_GNOME_KEYRING="${ENABLE_SYNC_GNOME_KEYRING:-true}"
 
 COMMON_RSYNC_OPTIONS=(
     --archive
@@ -75,6 +76,7 @@ init(){
         ENABLE_SYNC_GPG_CONFIG_KEYS
         ENABLE_SYNC_FIREFOX_DATA
         ENABLE_SYNC_BASH_HISTORY
+        ENABLE_SYNC_GNOME_KEYRING
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -185,6 +187,15 @@ init(){
 
     if test "${ENABLE_SYNC_BASH_HISTORY}" == true; then
         if ! sync_bash_history \
+            "${user_home_dir}" \
+            "${DESTINATION_HOMEDIR_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            exit 2
+        fi
+    fi
+
+    if test "${ENABLE_SYNC_GNOME_KEYRING}" == true; then
+        if ! sync_gnome_keyring \
             "${user_home_dir}" \
             "${DESTINATION_HOMEDIR_SPEC}" \
             "${COMMON_RSYNC_OPTIONS[@]}"; then
@@ -494,6 +505,35 @@ sync_bash_history(){
         "${destination_bash_history_file_spec}"; then
         printf \
             'Error: Unable to sync the Bash history file.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_gnome_keyring(){
+    local user_home_dir="${1}"; shift 1
+    local destination_homedir_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    printf 'Info: Syncing GNOME keyring...\n'
+    local gnome_keyring_data_dir_relative=/.local/share/keyrings
+    local source_gnome_keyring_data_dir="${user_home_dir}${gnome_keyring_data_dir_relative}"
+    local destination_gnome_keyring_data_dir_spec="${destination_homedir_spec}${gnome_keyring_data_dir_relative}"
+
+    if ! test -e "${source_gnome_keyring_data_dir}"; then
+        printf \
+            "%s: Warning: The GNOME keyring data directory doesn't exist, skipping...\\n" \
+            "${FUNCNAME[0]}" \
+            1>&2
+        return 0
+    fi
+
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${source_gnome_keyring_data_dir}" \
+        "${destination_gnome_keyring_data_dir_spec}"; then
+        printf \
+            'Error: Unable to sync the GNOME keyring.\n' \
             1>&2
         return 2
     fi
