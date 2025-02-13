@@ -10,6 +10,7 @@ ENABLE_SYNC_UDP2RAW_INSTALLATION="${ENABLE_SYNC_UDP2RAW_INSTALLATION:-true}"
 ENABLE_SYNC_BLUETOOTHD_DATA="${ENABLE_SYNC_BLUETOOTHD_DATA:-true}"
 ENABLE_SYNC_NETPLAN_CONFIG="${ENABLE_SYNC_NETPLAN_CONFIG:-true}"
 ENABLE_SYNC_FPRINTD_DATA="${ENABLE_SYNC_FPRINTD_DATA:-true}"
+ENABLE_SYNC_UNMANAGED_APPS="${ENABLE_SYNC_UNMANAGED_APPS:-true}"
 
 COMMON_RSYNC_OPTIONS=(
     --archive
@@ -32,7 +33,16 @@ COMMON_RSYNC_OPTIONS=(
 
     --delete
     --delete-after
-    --delete-excluded
+)
+
+UNMANAGED_APPS_RSYNC_OPTIONS=(
+    "${COMMON_RSYNC_OPTIONS[@]}"
+
+    # Exclude common package installation directories
+    --exclude /containerd/
+    --exclude /google/
+    --exclude /megasync/
+    --exclude /vagrant/
 )
 
 init(){
@@ -59,6 +69,7 @@ init(){
         ENABLE_SYNC_BLUETOOTHD_DATA
         ENABLE_SYNC_NETPLAN_CONFIG
         ENABLE_SYNC_FPRINTD_DATA
+        ENABLE_SYNC_UNMANAGED_APPS
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -148,6 +159,17 @@ init(){
             "${COMMON_RSYNC_OPTIONS[@]}"; then
             printf \
                 'Error: Unable to sync the fingerprint daemon data.\n' \
+                1>&2
+            exit 2
+        fi
+    fi
+
+    if test "${ENABLE_SYNC_UNMANAGED_APPS}" == true; then
+        if ! sync_unmanaged_apps \
+            "${DESTINATION_ROOTFS_SPEC}" \
+            "${UNMANAGED_APPS_RSYNC_OPTIONS[@]}"; then
+            printf \
+                'Error: Unable to sync the unmanaged software installations.\n' \
                 1>&2
             exit 2
         fi
@@ -305,6 +327,28 @@ sync_fprintd_data(){
         "${destination_rootfs_spec}${fprintd_data_dir}"; then
         printf \
             'Error: Unable to sync the fingerprint daemon data.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_unmanaged_apps(){
+    local destination_rootfs_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    local unmanaged_apps_dir=/opt
+    if ! test -e "${unmanaged_apps_dir}"; then
+        return 0
+    fi
+
+    printf \
+        'Info: Syncing the unmanaged software installations...\n'
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${unmanaged_apps_dir}/" \
+        "${destination_rootfs_spec}${unmanaged_apps_dir}"; then
+        printf \
+            'Error: Unable to sync the unmanaged software installations.\n' \
             1>&2
         return 2
     fi

@@ -153,6 +153,13 @@ Whether to sync the fingerprint daemon data.  This avoids reconfiguring fingerpr
 **Supported values:** `true`, `false`.  
 **Default value:** `true`.
 
+#### ENABLE_SYNC_UNMANAGED_APPS
+
+Whether to sync the non-managed system-wide software installations(/opt).
+
+**Supported values:** `true`, `false`.  
+**Default value:** `true`.
+
 ## References
 
 The following materials are referenced during the development of this project:
