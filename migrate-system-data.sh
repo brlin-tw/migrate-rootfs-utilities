@@ -29,10 +29,7 @@ COMMON_RSYNC_OPTIONS=(
     --progress
     --verbose
     --xattrs
-)
 
-WIREGUARD_RSYNC_OPTIONS=(
-    "${COMMON_RSYNC_OPTIONS[@]}"
     --delete
     --delete-after
     --delete-excluded
@@ -104,7 +101,7 @@ init(){
     if test "${ENABLE_SYNC_WIREGUARD_CONFIG}" == true; then
         if ! sync_wireguard_configuration \
             "${DESTINATION_ROOTFS_SPEC}" \
-            "${WIREGUARD_RSYNC_OPTIONS[@]}"; then
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
             printf \
                 'Error: Unable to sync the WireGuard configuration files.\n' \
                 1>&2
