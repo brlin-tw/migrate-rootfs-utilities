@@ -86,6 +86,13 @@ Whether to sync Firefox data.
 **Supported values:** `true`, `false`.  
 **Default value:** `true`.
 
+#### ENABLE_SYNC_BASH_HISTORY
+
+Whether to sync the Bash command history.
+
+**Supported values:** `true`, `false`.  
+**Default value:** `true`.
+
 ### migrate-system-data
 
 The following environment variables are only used in the migrate-system-data utility:

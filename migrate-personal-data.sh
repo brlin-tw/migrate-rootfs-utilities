@@ -15,6 +15,7 @@ ENABLE_SYNC_SSH_CONFIG_KEYS="${ENABLE_SYNC_SSH_CONFIG_KEYS:-true}"
 ENABLE_SYNC_DATAFS="${ENABLE_SYNC_DATAFS:-true}"
 ENABLE_SYNC_GPG_CONFIG_KEYS="${ENABLE_SYNC_GPG_CONFIG_KEYS:-true}"
 ENABLE_SYNC_FIREFOX_DATA="${ENABLE_SYNC_FIREFOX_DATA:-true}"
+ENABLE_SYNC_BASH_HISTORY="${ENABLE_SYNC_BASH_HISTORY:-true}"
 
 COMMON_RSYNC_OPTIONS=(
     --archive
@@ -73,6 +74,7 @@ init(){
         ENABLE_SYNC_DATAFS
         ENABLE_SYNC_GPG_CONFIG_KEYS
         ENABLE_SYNC_FIREFOX_DATA
+        ENABLE_SYNC_BASH_HISTORY
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -174,6 +176,15 @@ init(){
 
     if test "${ENABLE_SYNC_FIREFOX_DATA}" == true; then
         if ! sync_firefox_data \
+            "${user_home_dir}" \
+            "${DESTINATION_HOMEDIR_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            exit 2
+        fi
+    fi
+
+    if test "${ENABLE_SYNC_BASH_HISTORY}" == true; then
+        if ! sync_bash_history \
             "${user_home_dir}" \
             "${DESTINATION_HOMEDIR_SPEC}" \
             "${COMMON_RSYNC_OPTIONS[@]}"; then
@@ -454,6 +465,35 @@ sync_firefox_data(){
         }; then
         printf \
             'Error: Unable to sync the Firefox data.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_bash_history(){
+    local user_home_dir="${1}"; shift 1
+    local destination_homedir_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    printf 'Info: Syncing Bash history...\n'
+    local bash_history_file_relative=/.bash_history
+    local source_bash_history_file="${user_home_dir}${bash_history_file_relative}"
+    local destination_bash_history_file_spec="${destination_homedir_spec}${bash_history_file_relative}"
+
+    if ! test -e "${source_bash_history_file}"; then
+        printf \
+            "%s: Warning: The Bash history file doesn't exist, skipping...\\n" \
+            "${FUNCNAME[0]}" \
+            1>&2
+        return 0
+    fi
+
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${source_bash_history_file}" \
+        "${destination_bash_history_file_spec}"; then
+        printf \
+            'Error: Unable to sync the Bash history file.\n' \
             1>&2
         return 2
     fi
