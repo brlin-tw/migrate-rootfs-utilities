@@ -14,6 +14,7 @@ ENABLE_SYNC_STEAM_LIBRARY="${ENABLE_SYNC_STEAM_LIBRARY:-true}"
 ENABLE_SYNC_SSH_CONFIG_KEYS="${ENABLE_SYNC_SSH_CONFIG_KEYS:-true}"
 ENABLE_SYNC_DATAFS="${ENABLE_SYNC_DATAFS:-true}"
 ENABLE_SYNC_GPG_CONFIG_KEYS="${ENABLE_SYNC_GPG_CONFIG_KEYS:-true}"
+ENABLE_SYNC_FIREFOX_DATA="${ENABLE_SYNC_FIREFOX_DATA:-true}"
 
 COMMON_RSYNC_OPTIONS=(
     --archive
@@ -71,6 +72,7 @@ init(){
         ENABLE_SYNC_SSH_CONFIG_KEYS
         ENABLE_SYNC_DATAFS
         ENABLE_SYNC_GPG_CONFIG_KEYS
+        ENABLE_SYNC_FIREFOX_DATA
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -163,6 +165,15 @@ init(){
 
     if test "${ENABLE_SYNC_GPG_CONFIG_KEYS}" == true; then
         if ! sync_gnupg_config_and_keys \
+            "${user_home_dir}" \
+            "${DESTINATION_HOMEDIR_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            exit 2
+        fi
+    fi
+
+    if test "${ENABLE_SYNC_FIREFOX_DATA}" == true; then
+        if ! sync_firefox_data \
             "${user_home_dir}" \
             "${DESTINATION_HOMEDIR_SPEC}" \
             "${COMMON_RSYNC_OPTIONS[@]}"; then
@@ -410,6 +421,37 @@ sync_gnupg_config_and_keys(){
         "${destination_homedir_spec}/.gnupg/"; then
         printf \
             'Error: Unable to sync the GnuPG configuration and keys.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_firefox_data(){
+    local user_home_dir="${1}"; shift 1
+    local destination_homedir_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    printf 'Info: Syncing Firefox data...\n'
+    local firefox_data_dir_relative=/snap/firefox/common/.mozilla
+    local source_firefox_data_dir="${user_home_dir}${firefox_data_dir_relative}"
+    local destination_firefox_data_dir_spec="${destination_homedir_spec}${firefox_data_dir_relative}"
+
+    if ! test -e "${source_firefox_data_dir}"; then
+        printf \
+            "%s: Warning: The Firefox data directory doesn't exist, skipping...\\n" \
+            "${FUNCNAME[0]}" \
+            1>&2
+        return 0
+    fi
+
+    # NOTE: Rsync exit status 24 means "Partial transfer due to vanished source files", which would happen if the browser is running during the synchonization
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${source_firefox_data_dir}/" \
+        "${destination_firefox_data_dir_spec}" \
+        || test "${?}" == 24; then
+        printf \
+            'Error: Unable to sync the Firefox data.\n' \
             1>&2
         return 2
     fi

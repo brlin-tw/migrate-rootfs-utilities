@@ -79,6 +79,13 @@ Whether to sync the GnuPG configurations and keys.
 **Supported values:** `true`, `false`.  
 **Default value:** `true`.
 
+#### ENABLE_SYNC_FIREFOX_DATA
+
+Whether to sync Firefox data.
+
+**Supported values:** `true`, `false`.  
+**Default value:** `true`.
+
 ### migrate-system-data
 
 The following environment variables are only used in the migrate-system-data utility:
@@ -117,6 +124,13 @@ Whether to sync the fingerprint daemon data.  This avoids reconfiguring fingerpr
 
 **Supported values:** `true`, `false`.  
 **Default value:** `true`.
+
+## References
+
+The following materials are referenced during the development of this project:
+
+* The rsync(1) manual page.  
+  Explains the exit status code of the "Partial transfer due to vanished source files" error.
 
 ## Licensing
 
