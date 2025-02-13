@@ -18,6 +18,7 @@ ENABLE_SYNC_FIREFOX_DATA="${ENABLE_SYNC_FIREFOX_DATA:-true}"
 ENABLE_SYNC_BASH_HISTORY="${ENABLE_SYNC_BASH_HISTORY:-true}"
 ENABLE_SYNC_GNOME_KEYRING="${ENABLE_SYNC_GNOME_KEYRING:-true}"
 ENABLE_SYNC_KDE_WALLET="${ENABLE_SYNC_KDE_WALLET:-true}"
+ENABLE_SYNC_USER_APPLICATIONS="${ENABLE_SYNC_USER_APPLICATIONS:-true}"
 
 COMMON_RSYNC_OPTIONS=(
     --archive
@@ -79,6 +80,7 @@ init(){
         ENABLE_SYNC_BASH_HISTORY
         ENABLE_SYNC_GNOME_KEYRING
         ENABLE_SYNC_KDE_WALLET
+        ENABLE_SYNC_USER_APPLICATIONS
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -207,6 +209,15 @@ init(){
 
     if test "${ENABLE_SYNC_KDE_WALLET}" == true; then
         if ! sync_kde_wallet \
+            "${user_home_dir}" \
+            "${DESTINATION_HOMEDIR_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            exit 2
+        fi
+    fi
+
+    if test "${ENABLE_SYNC_USER_APPLICATIONS}" == true; then
+        if ! sync_user_applications \
             "${user_home_dir}" \
             "${DESTINATION_HOMEDIR_SPEC}" \
             "${COMMON_RSYNC_OPTIONS[@]}"; then
@@ -574,6 +585,57 @@ sync_kde_wallet(){
         "${destination_kde_wallet_data_dir_spec}"; then
         printf \
             'Error: Unable to sync the KDE Wallet.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_user_applications(){
+    local user_home_dir="${1}"; shift 1
+    local destination_homedir_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    printf 'Info: Syncing user applications...\n'
+    local user_applications_dir_relative=/應用軟體
+    local source_user_applications_dir="${user_home_dir}${user_applications_dir_relative}"
+    local destination_user_applications_dir_spec="${destination_homedir_spec}${user_applications_dir_relative}"
+
+    if ! test -e "${source_user_applications_dir}"; then
+        printf \
+            "%s: Warning: The user applications directory doesn't exist, skipping...\\n" \
+            "${FUNCNAME[0]}" \
+            1>&2
+        return 0
+    fi
+
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${source_user_applications_dir}/" \
+        "${destination_user_applications_dir_spec}"; then
+        printf \
+            'Error: Unable to sync the user applications.\n' \
+            1>&2
+        return 2
+    fi
+
+    printf 'Info: Syncing user applications compatibility link...\n'
+    local user_applications_dir_link_relative=/Applications
+    local source_user_applications_dir_link="${user_home_dir}${user_applications_dir_link_relative}"
+
+    if ! test -L "${source_user_applications_dir_link}"; then
+        printf \
+            "%s: Warning: The user applications directory compatibility link doesn't exist, skipping...\\n" \
+            "${FUNCNAME[0]}" \
+            1>&2
+        return 0
+    fi
+
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${source_user_applications_dir_link}" \
+        "${destination_homedir_spec}"; then
+        printf \
+            'Error: Unable to sync the user applications directory compatibility link.\n' \
             1>&2
         return 2
     fi

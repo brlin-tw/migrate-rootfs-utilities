@@ -107,6 +107,13 @@ Whether to sync the KDE Wallet data.
 **Supported values:** `true`, `false`.  
 **Default value:** `true`.
 
+#### ENABLE_SYNC_USER_APPLICATIONS
+
+Whether to sync the user local applications(in the non-standard Applications user directory).
+
+**Supported values:** `true`, `false`.  
+**Default value:** `true`.
+
 ### migrate-system-data
 
 The following environment variables are only used in the migrate-system-data utility:
