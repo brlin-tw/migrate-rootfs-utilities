@@ -1,4 +1,4 @@
-# Release product and their build aritfacts
+# Release product and their build artifacts
 #
 # References:
 #
@@ -7,7 +7,7 @@
 #
 # Copyright 2024 林博仁(Buo-ren Lin) <buo.ren.lin@gmail.com>
 # SPDX-License-Identifier: CC-BY-SA-4.0
-name: Release product and their build aritfacts
+name: Release product and their build artifacts
 on:
   push:
     tags:
@@ -15,8 +15,12 @@ on:
 
 jobs:
   release:
-    name: Release product and their build aritfacts
-    runs-on: ubuntu-20.04
+    name: Release product and their build artifacts
+    runs-on: ubuntu-24.04
+    permissions:
+      # Allow publishing release packages to Releases
+      contents: write
+      packages: write
     steps:
       - name: Check out content from the Git repository
         uses: actions/checkout@v4
@@ -71,6 +75,7 @@ jobs:
 
       - name: Generate the release archive
         run: |-
+          set -e
           sudo ./continuous-integration/generate-build-artifacts.install-system-deps.sh
           ./continuous-integration/generate-build-artifacts.sh
 

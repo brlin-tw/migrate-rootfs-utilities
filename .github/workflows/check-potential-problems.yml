@@ -34,7 +34,7 @@ jobs:
           Configure pre-commit data cache to speed up continuous integration
         uses: actions/cache@v4
         with:
-          key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
+          key: pre-commit|${{ runner.os }}|${{ hashFiles('.pre-commit-config.yaml') }}
           path: ${{ env.PRE_COMMIT_HOME }}
 
       - name: >-
@@ -47,10 +47,13 @@ jobs:
       - name: >-
           Patch the sudo security policy so that programs run via sudo
           will recognize environment variables predefined by GitHub
+        # False positive: This step(and thus the entire workflow) will fail when the command returns a non-zero exit status
+        # amazon-q-ignore-next-line
         run: sudo ./continuous-integration/patch-github-actions-sudo-security-policy.sh
 
       - name: Run the static analysis programs
         run: |
+          set -e
           sudo ./continuous-integration/do-static-analysis.install-system-deps.sh
           ./continuous-integration/do-static-analysis.sh
 
@@ -58,6 +61,6 @@ jobs:
         uses: yanzay/notify-telegram@v0.1.0
         if: always()
         with:
-          chat: '@brlin_project_ci_results'
+          chat: ${{ vars.telegram_chat_id_ci }}
           token: ${{ secrets.telegram_bot_api_token_ci }}
           status: ${{ job.status }}
