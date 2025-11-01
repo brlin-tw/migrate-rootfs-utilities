@@ -12,37 +12,37 @@ This product comprises of two utilities:
 * [migrate-personal-data.sh](migrate-personal-data.sh): For migrating personal data files, including but not limited to documents and photos.
 * [migrate-system-data.sh](migrate-system-data.sh): For migrating system data files, including but not limited to network settings and bluetooth pairing data.
 
-Both utilities are required to be run as the superuser(root).
+Both utilities are required to be run as the superuser(root) and uses the same configuration file([config.sh.source](config.sh.source)).
 
-## Environment variables that can change the migration utilities' behaviors
+## Configuration variables that can change the migration utilities' behaviors
 
-The following environment variables can change the migration utilities' behaviors:
+The following configuration variables can change the migration utilities' behaviors:
 
 ### Common variables
 
-The following environment variables are used in both of the utilities:
+The following configuration variables are used in both of the utilities:
 
 #### DESTINATION_ROOTFS_SPEC
 
 Specifies the Rsync specification of the destination root filesystem (could be a remote path).
 
-Setting this environment variable is mandatory.
+Setting this configuration variable is mandatory.
 
 ### migrate-personal-data
 
-The following environment variables are only used in the migrate-personal-data utility:
+The following configuration variables are only used in the migrate-personal-data utility:
 
 #### DESTINATION_HOMEDIR_SPEC
 
 Specifies the Rsync specification of the destination user home directory (could be a remote path).
 
-**Default value:** `auto`(Automatically determine the path using the value of the DESTINATION_ROOTFS_SPEC environment variable.)
+**Default value:** `auto`(Automatically determine the path using the value of the DESTINATION_ROOTFS_SPEC configuration variable.)
 
 #### DESTINATION_DATAFS_SPEC
 
 Specifies the Rsync specification of the destination user data file system (could be a remote path).
 
-**Default value:** `auto`(Automatically determine the path using the value of the DESTINATION_ROOTFS_SPEC environment variable.)
+**Default value:** `auto`(Automatically determine the path using the value of the DESTINATION_ROOTFS_SPEC configuration variable.)
 
 #### ENABLE_SYNC_USER_DIRS
 
@@ -116,7 +116,7 @@ Whether to sync the user local applications(in the non-standard Applications use
 
 ### migrate-system-data
 
-The following environment variables are only used in the migrate-system-data utility:
+The following configuration variables are only used in the migrate-system-data utility:
 
 #### ENABLE_SYNC_WIREGUARD_CONFIG
 
