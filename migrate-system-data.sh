@@ -101,6 +101,7 @@ init(){
 
     if test "${ENABLE_SYNC_UDP2RAW_INSTALLATION}" == true; then
         if ! sync_udpraw_installation \
+            "${SOURCE_ROOTFS_SPEC}" \
             "${DESTINATION_ROOTFS_SPEC}" \
             "${COMMON_RSYNC_OPTIONS[@]}"; then
             printf \
@@ -112,6 +113,7 @@ init(){
 
     if test "${ENABLE_SYNC_BLUETOOTHD_DATA}" == true; then
         if ! sync_bluetoothd_data \
+            "${SOURCE_ROOTFS_SPEC}" \
             "${DESTINATION_ROOTFS_SPEC}" \
             "${COMMON_RSYNC_OPTIONS[@]}"; then
             printf \
@@ -123,6 +125,7 @@ init(){
 
     if test "${ENABLE_SYNC_NETPLAN_CONFIG}" == true; then
         if ! sync_netplan_config \
+            "${SOURCE_ROOTFS_SPEC}" \
             "${DESTINATION_ROOTFS_SPEC}" \
             "${COMMON_RSYNC_OPTIONS[@]}"; then
             printf \
@@ -134,6 +137,7 @@ init(){
 
     if test "${ENABLE_SYNC_FPRINTD_DATA}" == true; then
         if ! sync_fprintd_data \
+            "${SOURCE_ROOTFS_SPEC}" \
             "${DESTINATION_ROOTFS_SPEC}" \
             "${COMMON_RSYNC_OPTIONS[@]}"; then
             printf \
@@ -145,6 +149,7 @@ init(){
 
     if test "${ENABLE_SYNC_UNMANAGED_APPS}" == true; then
         if ! sync_unmanaged_apps \
+            "${SOURCE_ROOTFS_SPEC}" \
             "${DESTINATION_ROOTFS_SPEC}" \
             "${UNMANAGED_APPS_RSYNC_OPTIONS[@]}"; then
             printf \
