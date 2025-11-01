@@ -67,3 +67,22 @@ is_rsync_remote_specification(){
         return 1
     fi
 }
+
+# Determine whether the given path is an absolute path.
+#
+# @param path
+#   The path to be checked.
+#
+# @returns integer
+#   0: The given path is an absolute path.
+#   1: The given path is not an absolute path.
+is_absolute_path(){
+    local path="${1}"; shift
+
+    local regex_absolute_path='^/'
+    if [[ "${path}" =~ ${regex_absolute_path} ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
