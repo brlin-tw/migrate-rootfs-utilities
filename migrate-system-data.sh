@@ -366,4 +366,24 @@ if ! set "${set_opts[@]}"; then
     exit 2
 fi
 
+required_commands=(
+    cut
+    getent
+    realpath
+    rsync
+)
+flag_required_commands_check_failed=false
+for command in "${required_commands[@]}"; do
+    if ! command -v "${command}" >/dev/null 2>&1; then
+        printf \
+            'Error: The required command "%s" is not found in PATH.\n' \
+            "${command}" \
+            1>&2
+        flag_required_commands_check_failed=true
+    fi
+done
+if test "${flag_required_commands_check_failed}" == true; then
+    exit 1
+fi
+
 init
