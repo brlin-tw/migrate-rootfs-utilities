@@ -202,6 +202,13 @@ Whether to sync the non-managed system-wide software installations(/opt).
 **Supported values:** `true`, `false`.  
 **Default value:** `true`.
 
+#### ENABLE_SYNC_MACHINE_OWNER_KEYS
+
+Whether to sync the Machine Owner Keys(MOK) used for UEFI Secure Boot.
+
+**Supported values:** `true`, `false`.  
+**Default value:** `true`.
+
 ## References
 
 The following materials are referenced during the development of this project:
