@@ -159,6 +159,18 @@ init(){
         fi
     fi
 
+    if test "${ENABLE_SYNC_MACHINE_OWNER_KEYS}" == true; then
+        if ! sync_machine_owner_keys \
+            "${SOURCE_ROOTFS_SPEC}" \
+            "${DESTINATION_ROOTFS_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            printf \
+                'Error: Unable to sync the machine owner keys.\n' \
+                1>&2
+            exit 2
+        fi
+    fi
+
     if ! end_timestamp="$(printf '%(%s)T')"; then
         printf \
             'Error: Unable to determine the end timestamp.\n' \
@@ -317,6 +329,31 @@ sync_unmanaged_apps(){
         "${destination_rootfs_spec}${unmanaged_apps_dir}"; then
         printf \
             'Error: Unable to sync the unmanaged software installations.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_machine_owner_keys(){
+    local source_rootfs_spec="${1}"; shift 1
+    local destination_rootfs_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    local machine_owner_keys_dir=/var/lib/shim-signed/mok
+    local machine_owner_keys_dir_spec="${source_rootfs_spec%/}${machine_owner_keys_dir}"
+    if ! is_rsync_remote_specification "${machine_owner_keys_dir_spec}" \
+        && ! test -e "${machine_owner_keys_dir}"; then
+        return 0
+    fi
+
+    printf \
+        'Info: Syncing the machine owner keys...\n'
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${machine_owner_keys_dir_spec}/" \
+        "${destination_rootfs_spec}${machine_owner_keys_dir}"; then
+        printf \
+            'Error: Unable to sync the machine owner keys.\n' \
             1>&2
         return 2
     fi
