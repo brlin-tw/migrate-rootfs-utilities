@@ -31,6 +31,15 @@ init(){
         exit 1
     fi
 
+    if ! is_rsync_remote_specification "${SOURCE_ROOTFS_SPEC}" \
+        && ! test -e "${SOURCE_ROOTFS_SPEC}"; then
+        printf \
+            'Error: The source root filesystem specification "%s" does not exist.\n' \
+            "${SOURCE_ROOTFS_SPEC}" \
+            1>&2
+        exit 1
+    fi
+
     local regex_boolean_values='^(true|false)$'
     local -a boolean_parameters=(
         ENABLE_SYNC_WIREGUARD_CONFIG
@@ -80,6 +89,7 @@ init(){
 
     if test "${ENABLE_SYNC_WIREGUARD_CONFIG}" == true; then
         if ! sync_wireguard_configuration \
+            "${SOURCE_ROOTFS_SPEC}" \
             "${DESTINATION_ROOTFS_SPEC}" \
             "${COMMON_RSYNC_OPTIONS[@]}"; then
             printf \
@@ -160,18 +170,21 @@ init(){
 }
 
 sync_wireguard_configuration(){
+    local source_rootfs_spec="${1}"; shift 1
     local destination_rootfs_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
     local wireguard_config_dir=/etc/wireguard
-    if ! test -e "${wireguard_config_dir}"; then
+    local wireguard_config_dir_spec="${source_rootfs_spec%/}${wireguard_config_dir}"
+    if ! is_rsync_remote_specification "${wireguard_config_dir_spec}" \
+        && ! test -e "${wireguard_config_dir}"; then
         return 0
     fi
 
     printf 'Info: Syncing the WireGuard configuration files...\n'
     if ! rsync \
         "${rsync_options[@]}" \
-        "${wireguard_config_dir}" \
+        "${wireguard_config_dir_spec}" \
         "${destination_rootfs_spec}/etc/"; then
         printf \
             'Error: Unable to sync the WireGuard configuration files.\n' \
@@ -181,18 +194,21 @@ sync_wireguard_configuration(){
 }
 
 sync_udpraw_installation(){
+    local source_rootfs_spec="${1}"; shift 1
     local destination_rootfs_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
     local udp2raw_installation_dir=/opt/udp2raw
-    if ! test -e "${udp2raw_installation_dir}"; then
+    local udp2raw_config_dir_spec="${source_rootfs_spec%/}${udp2raw_installation_dir}"
+    if ! is_rsync_remote_specification "${udp2raw_config_dir_spec}" \
+        && ! test -e "${udp2raw_installation_dir}"; then
         return 0
     fi
 
     printf 'Info: Syncing the udp2raw installation...\n'
     if ! rsync \
         "${rsync_options[@]}" \
-        "${udp2raw_installation_dir}" \
+        "${udp2raw_config_dir_spec}" \
         "${destination_rootfs_spec}/opt"; then
         printf \
             'Error: Unable to sync the udp2raw installation.\n' \
@@ -202,11 +218,14 @@ sync_udpraw_installation(){
 }
 
 sync_bluetoothd_data(){
+    local source_rootfs_spec="${1}"; shift 1
     local destination_rootfs_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
     local bluetoothd_data_dir=/var/lib/bluetooth
-    if ! test -e "${bluetoothd_data_dir}"; then
+    local bluetoothd_data_dir_spec="${source_rootfs_spec%/}${bluetoothd_data_dir}"
+    if ! is_rsync_remote_specification "${bluetoothd_data_dir_spec}" \
+        && ! test -e "${bluetoothd_data_dir}"; then
         return 0
     fi
 
@@ -214,7 +233,7 @@ sync_bluetoothd_data(){
         'Info: Syncing the bluetooth daemon data...\n'
     if ! rsync \
         "${rsync_options[@]}" \
-        "${bluetoothd_data_dir}/" \
+        "${bluetoothd_data_dir_spec}/" \
         "${destination_rootfs_spec}${bluetoothd_data_dir}"; then
         printf \
             'Error: Unable to sync the bluetooth daemon data.\n' \
@@ -224,11 +243,14 @@ sync_bluetoothd_data(){
 }
 
 sync_netplan_config(){
+    local source_rootfs_spec="${1}"; shift 1
     local destination_rootfs_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
     local netplan_config_dir=/etc/netplan
-    if ! test -e "${netplan_config_dir}"; then
+    local netplan_config_dir_spec="${source_rootfs_spec%/}${netplan_config_dir}"
+    if ! is_rsync_remote_specification "${netplan_config_dir_spec}" \
+        && ! test -e "${netplan_config_dir}"; then
         return 0
     fi
 
@@ -236,7 +258,7 @@ sync_netplan_config(){
         'Info: Syncing the Netplan configuration files...\n'
     if ! rsync \
         "${rsync_options[@]}" \
-        "${netplan_config_dir}/" \
+        "${netplan_config_dir_spec}/" \
         "${destination_rootfs_spec}${netplan_config_dir}"; then
         printf \
             'Error: Unable to sync the Netplan configuration files.\n' \
@@ -246,11 +268,14 @@ sync_netplan_config(){
 }
 
 sync_fprintd_data(){
+    local source_rootfs_spec="${1}"; shift 1
     local destination_rootfs_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
     local fprintd_data_dir=/var/lib/fprint
-    if ! test -e "${fprintd_data_dir}"; then
+    local fprintd_data_dir_spec="${source_rootfs_spec%/}${fprintd_data_dir}"
+    if ! is_rsync_remote_specification "${fprintd_data_dir_spec}" \
+        && ! test -e "${fprintd_data_dir}"; then
         return 0
     fi
 
@@ -268,11 +293,14 @@ sync_fprintd_data(){
 }
 
 sync_unmanaged_apps(){
+    local source_rootfs_spec="${1}"; shift 1
     local destination_rootfs_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
     local unmanaged_apps_dir=/opt
-    if ! test -e "${unmanaged_apps_dir}"; then
+    local unmanaged_apps_dir_spec="${source_rootfs_spec%/}${unmanaged_apps_dir}"
+    if ! is_rsync_remote_specification "${unmanaged_apps_dir_spec}" \
+        && ! test -e "${unmanaged_apps_dir}"; then
         return 0
     fi
 

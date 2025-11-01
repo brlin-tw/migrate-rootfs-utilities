@@ -48,3 +48,22 @@ determine_elapsed_time(){
             "${elapsed_seconds}"
     fi
 }
+
+# Determine whether the given Rsync specification is a remote specification.
+#
+# @param rsync_specification
+#   The Rsync specification to be checked.
+#
+# @returns integer
+#   0: The given Rsync specification is a Rsync remote specification.
+#   1: The given Rsync specification is not a Rsync remote specification.
+is_rsync_remote_specification(){
+    local rsync_specification="${1}"; shift
+
+    local regex_remote_specification='^[^/:]+:'
+    if [[ "${rsync_specification}" =~ ${regex_remote_specification} ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
