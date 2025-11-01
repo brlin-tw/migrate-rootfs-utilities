@@ -171,6 +171,18 @@ init(){
         fi
     fi
 
+    if test "${ENABLE_SYNC_SSH_HOST_KEYS}" == true; then
+        if ! sync_ssh_host_keys \
+            "${SOURCE_ROOTFS_SPEC}" \
+            "${DESTINATION_ROOTFS_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            printf \
+                'Error: Unable to sync the SSH host keys.\n' \
+                1>&2
+            exit 2
+        fi
+    fi
+
     if ! end_timestamp="$(printf '%(%s)T')"; then
         printf \
             'Error: Unable to determine the end timestamp.\n' \
@@ -354,6 +366,33 @@ sync_machine_owner_keys(){
         "${destination_rootfs_spec}${machine_owner_keys_dir}"; then
         printf \
             'Error: Unable to sync the machine owner keys.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_ssh_host_keys(){
+    local source_rootfs_spec="${1}"; shift 1
+    local destination_rootfs_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    local ssh_host_keys_dir=/etc/ssh
+    local ssh_host_keys_dir_spec="${source_rootfs_spec%/}${ssh_host_keys_dir}"
+    if ! is_rsync_remote_specification "${ssh_host_keys_dir_spec}" \
+        && ! test -e "${ssh_host_keys_dir}"; then
+        return 0
+    fi
+
+    printf \
+        'Info: Syncing the SSH host keys...\n'
+    if ! rsync \
+        "${rsync_options[@]}" \
+        --include='ssh_host_*_key*' \
+        --exclude='*' \
+        "${ssh_host_keys_dir_spec}/" \
+        "${destination_rootfs_spec}${ssh_host_keys_dir}"; then
+        printf \
+            'Error: Unable to sync the SSH host keys.\n' \
             1>&2
         return 2
     fi

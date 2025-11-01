@@ -228,6 +228,13 @@ Whether to sync the Machine Owner Keys(MOK) used for UEFI Secure Boot.
 **Supported values:** `true`, `false`.  
 **Default value:** `true`.
 
+#### ENABLE_SYNC_SSH_HOST_KEYS
+
+Whether to sync the SSH host keys.
+
+**Supported values:** `true`, `false`.  
+**Default value:** `true`.
+
 ## References
 
 The following materials are referenced during the development of this project:
