@@ -199,6 +199,15 @@ init(){
         fi
     fi
 
+    if test "${ENABLE_SYNC_KDE_CONNECT}" == true; then
+        if ! sync_kde_connect \
+            "${user_home_dir}" \
+            "${DESTINATION_HOMEDIR_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            exit 2
+        fi
+    fi
+
     if ! end_timestamp="$(printf '%(%s)T')"; then
         printf \
             'Error: Unable to determine the end timestamp.\n' \
@@ -576,6 +585,35 @@ sync_user_applications(){
         "${destination_homedir_spec}"; then
         printf \
             'Error: Unable to sync the user applications directory compatibility link.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_kde_connect(){
+    local user_home_dir="${1}"; shift 1
+    local destination_homedir_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    printf 'Info: Syncing KDE Connect data...\n'
+    local kde_connect_data_dir_relative=/.config/kdeconnect
+    local source_kde_connect_data_dir="${user_home_dir}${kde_connect_data_dir_relative}"
+    local destination_kde_connect_data_dir_spec="${destination_homedir_spec}${kde_connect_data_dir_relative}"
+
+    if ! test -e "${source_kde_connect_data_dir}"; then
+        printf \
+            "%s: Warning: The KDE Connect data directory doesn't exist, skipping...\\n" \
+            "${FUNCNAME[0]}" \
+            1>&2
+        return 0
+    fi
+
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${source_kde_connect_data_dir}/" \
+        "${destination_kde_connect_data_dir_spec}"; then
+        printf \
+            'Error: Unable to sync the KDE Connect data.\n' \
             1>&2
         return 2
     fi
