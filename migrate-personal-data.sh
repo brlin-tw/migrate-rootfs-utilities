@@ -324,6 +324,10 @@ sync_user_dirs(){
         --delete-after
         --delete-excluded
 
+        # Don't sync virtual environment directories
+        --exclude .venv/
+        --exclude venv/
+
         --exclude .vagrant/
         --exclude cache/
         --exclude .cache/
