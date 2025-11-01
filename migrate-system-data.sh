@@ -6,6 +6,16 @@
 
 init(){
     printf \
+        'Info: Loading the configuration file...\n'
+    # shellcheck source=SCRIPTDIR/config.sh.source
+    if ! source "${script_dir}/config.sh.source"; then
+        printf \
+            'Error: Unable to load the configuration file.\n' \
+            1>&2
+        exit 2
+    fi
+
+    printf \
         'Info: Checking runtime parameters...\n'
     if test "${EUID}" != 0; then
         printf \
@@ -324,16 +334,6 @@ set_opts=(
 if ! set "${set_opts[@]}"; then
     printf \
         'Error: Unable to configure the defensive interpreter behaviors.\n' \
-        1>&2
-    exit 2
-fi
-
-printf \
-    'Info: Loading the configuration file...\n'
-# shellcheck source=SCRIPTDIR/config.sh.source
-if ! source "${script_dir}/config.sh.source"; then
-    printf \
-        'Error: Unable to load the configuration file.\n' \
         1>&2
     exit 2
 fi
