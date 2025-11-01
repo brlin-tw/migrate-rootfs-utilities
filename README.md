@@ -5,6 +5,24 @@ Utilities to help migrating user and system data to another rootfs.
 <https://gitlab.com/brlin/migrate-rootfs-utilities>  
 [![The GitLab CI pipeline status badge of the project's `main` branch](https://gitlab.com/brlin/migrate-rootfs-utilities/badges/main/pipeline.svg?ignore_skipped=true "Click here to check out the comprehensive status of the GitLab CI pipelines")](https://gitlab.com/brlin/migrate-rootfs-utilities/-/pipelines) [![GitHub Actions workflow status badge](https://github.com/brlin-tw/migrate-rootfs-utilities/actions/workflows/check-potential-problems.yml/badge.svg "GitHub Actions workflow status")](https://github.com/brlin-tw/migrate-rootfs-utilities/actions/workflows/check-potential-problems.yml) [![pre-commit enabled badge](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white "This project uses pre-commit to check potential problems")](https://pre-commit.com/) [![REUSE Specification compliance badge](https://api.reuse.software/badge/gitlab.com/brlin/migrate-rootfs-utilities "This project complies to the REUSE specification to decrease software licensing costs")](https://api.reuse.software/info/gitlab.com/brlin/migrate-rootfs-utilities)
 
+## Prerequisites
+
+The following prerequisites must be met before using the migration utilities:
+
+* The following software are required to be installed on the system where the migration utilities are run:
+    + GNU Bash  
+      Used as the interpreter of the migration utilities.
+    + GNU Core Utilities  
+      For determining the script directory and plaintext data operations.
+    + Rsync  
+      Used for synchronizing files between the source and destination root filesystems.
+        - The version 3.2.3 or above is required for supporting the `--mkpath` option.
+    + The GNU C library(glibc)  
+      For determining the user's home directory using the password database.
+    + (Optional) OpenSSH  
+      Used if the source or destination root filesystem is remote.
+* You must have superuser(root) privileges to run the migration utilities.
+
 ## Usage
 
 This product comprises of two utilities:
