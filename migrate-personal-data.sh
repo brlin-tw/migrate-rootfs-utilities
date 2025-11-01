@@ -208,6 +208,17 @@ init(){
         fi
     fi
 
+    if test "${ENABLE_SYNC_VBOX_VMS}" == true; then
+        if ! sync_vbox_vms \
+            "${user_home_dir}" \
+            "${DESTINATION_HOMEDIR_SPEC}" \
+            "${SOURCE_VBOX_VM_DIR}" \
+            "${DESTINATION_VBOX_VM_DIR}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            exit 2
+        fi
+    fi
+
     if ! end_timestamp="$(printf '%(%s)T')"; then
         printf \
             'Error: Unable to determine the end timestamp.\n' \
@@ -614,6 +625,58 @@ sync_kde_connect(){
         "${destination_kde_connect_data_dir_spec}"; then
         printf \
             'Error: Unable to sync the KDE Connect data.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_vbox_vms(){
+    local user_home_dir="${1}"; shift 1
+    local destination_homedir_spec="${1}"; shift 1
+    local source_vbox_vm_dir="${1}"; shift 1
+    local destination_vbox_vm_dir="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    printf 'Info: Syncing VirtualBox VMs...\n'
+
+    if test -z "${source_vbox_vm_dir}"; then
+        source_vbox_vm_dir="${user_home_dir}/VirtualBox VMs"
+        if ! test -e "${source_vbox_vm_dir}"; then
+            printf \
+                "%s: Warning: The VirtualBox VMs directory doesn't exist, skipping...\\n" \
+                "${FUNCNAME[0]}" \
+                1>&2
+            return 0
+        fi
+    else
+        if ! is_rsync_remote_specification "${source_vbox_vm_dir}" \
+            && ! is_absolute_path "${source_vbox_vm_dir}"; then
+            source_vbox_vm_dir="${user_home_dir}/${source_vbox_vm_dir}"
+            if ! test -e "${source_vbox_vm_dir}"; then
+                printf \
+                    "%s: Warning: The VirtualBox VMs directory doesn't exist, skipping...\\n" \
+                    "${FUNCNAME[0]}" \
+                    1>&2
+                return 0
+            fi
+        fi
+    fi
+
+    if test -z "${destination_vbox_vm_dir}"; then
+        destination_vbox_vm_dir="${destination_homedir_spec%/}/VirtualBox VMs"
+    else
+        if ! is_rsync_remote_specification "${destination_vbox_vm_dir}" \
+            && ! is_absolute_path "${destination_vbox_vm_dir}"; then
+            destination_vbox_vm_dir="${destination_homedir_spec}/${destination_vbox_vm_dir}"
+        fi
+    fi
+
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${source_vbox_vm_dir}/" \
+        "${destination_vbox_vm_dir}"; then
+        printf \
+            'Error: Unable to sync the VirtualBox VMs.\n' \
             1>&2
         return 2
     fi

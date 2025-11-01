@@ -80,11 +80,23 @@ Specifies the Rsync specification of the source user home directory (could be a 
 
 **Default value:** `auto`(Automatically determine the path using password database.)
 
+#### SOURCE_VBOX_VM_DIR
+
+Specifies the path to the VirtualBox VMs directory in the source system.
+
+If the path is relative, it is relative to the user's home directory(`SOURCE_HOMEDIR_SPEC`).
+
 #### DESTINATION_DATAFS_SPEC
 
 Specifies the Rsync specification of the destination user data file system (could be a remote path).
 
 **Default value:** `auto`(Automatically determine the path using the value of the DESTINATION_ROOTFS_SPEC configuration variable.)
+
+#### DESTINATION_VBOX_VM_DIR
+
+Specifies the path to the VirtualBox VMs directory in the destination system.
+
+If the path is relative, it is relative to the user's home directory(`DESTINATION_HOMEDIR_SPEC`).
 
 #### ENABLE_SYNC_USER_DIRS
 
