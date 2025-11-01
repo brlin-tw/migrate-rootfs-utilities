@@ -90,14 +90,18 @@ init(){
         exit 2
     fi
 
-    if ! user_home_dir="$(
-        getent passwd "${USER}" \
-            | cut --delimiter=: --fields=6
-        )"; then
-        printf \
-            'Error: Unable to parse the local user home directory.\n' \
-            1>&2
-        exit 2
+    if test "${SOURCE_HOMEDIR_SPEC}" == auto; then
+        if ! user_home_dir="$(
+            getent passwd "${USER}" \
+                | cut --delimiter=: --fields=6
+            )"; then
+            printf \
+                'Error: Unable to parse the local user home directory.\n' \
+                1>&2
+            exit 2
+        fi
+    else
+        user_home_dir="${SOURCE_HOMEDIR_SPEC}"
     fi
 
     if test "${ENABLE_SYNC_USER_DIRS}" == true; then
