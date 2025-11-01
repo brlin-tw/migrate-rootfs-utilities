@@ -94,3 +94,6 @@
 
 # Don't track unpacked product files
 /migrate-rootfs-utilities-*/
+
+# Don't track fake destination root filesystem used in tests
+/test-dest/
