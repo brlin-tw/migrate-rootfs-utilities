@@ -362,18 +362,30 @@ sync_steam_library(){
 
     print_progress 'Syncing Steam library...'
 
-    steam_library_dir="${user_home_dir}/.local/share/Steam"
-    if ! test -e "${steam_library_dir}"; then
-        printf \
-            'Warning: Steam library not found, skipping...\n' \
-            1>&2
+    local steam_library_dir=".steam"
+    local steam_library_dir_alt=".local/share/Steam"
+    local \
+        source_steam_library_dir \
+        destination_steam_library_dir_spec
+    if ! test -e "${user_home_dir}/${steam_library_dir}"; then
+        if test -e "${user_home_dir}/${steam_library_dir_alt}"; then
+            source_steam_library_dir="${user_home_dir}/${steam_library_dir_alt}"
+            destination_steam_library_dir_spec="${destination_homedir_spec}/${steam_library_dir_alt}"
+        else
+            printf \
+                'Warning: Steam library not found, skipping...\n' \
+                1>&2
+        fi
         return 0
+    else
+        source_steam_library_dir="${user_home_dir}/${steam_library_dir}"
+        destination_steam_library_dir_spec="${destination_homedir_spec}/${steam_library_dir}"
     fi
 
     if ! rsync \
         "${rsync_options[@]}" \
-        "${steam_library_dir}/" \
-        "${destination_homedir_spec}/.local/share/Steam"; then
+        "${source_steam_library_dir}/" \
+        "${destination_steam_library_dir_spec}"; then
         printf \
             'Error: Unable to sync the Steam library.\n' \
             1>&2
