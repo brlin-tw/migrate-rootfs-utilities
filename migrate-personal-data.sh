@@ -5,8 +5,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 init(){
-    printf \
-        'Info: Loading the configuration file...\n'
+    # shellcheck source-path=SCRIPTDIR
+    if ! source "${script_dir}/functions.sh.source"; then
+        printf \
+            'Error: Unable to load the functions file.\n' \
+            1>&2
+        exit 2
+    fi
+
+    print_progress 'Loading the configuration file...'
     # shellcheck source=SCRIPTDIR/config.sh.source
     if ! source "${script_dir}/config.sh.source"; then
         printf \
@@ -14,9 +21,12 @@ init(){
             1>&2
         exit 2
     fi
-
     printf \
-        'Info: Checking runtime parameters...\n'
+        'Info: Configuration file loaded successfully.\n'
+
+    print_progress 'Checking runtime parameters...'
+    printf \
+        'Info: Checking the running user...\n'
     if test "${EUID}" != 0; then
         printf \
             'Error: This program should be run as the superuser(root).\n' \
@@ -24,6 +34,8 @@ init(){
         exit 1
     fi
 
+    printf \
+        'Info: Checking the DESTINATION_ROOTFS_SPEC parameter...\n'
     if test "${DESTINATION_ROOTFS_SPEC}" == unset; then
         printf \
             'Error: The DESTINATION_ROOTFS_SPEC parameter is not set.\n' \
@@ -31,6 +43,8 @@ init(){
         exit 1
     fi
 
+    printf \
+        'Info: Determining destination paths...\n'
     if test "${DESTINATION_HOMEDIR_SPEC}" == auto; then
         DESTINATION_HOMEDIR_SPEC="${DESTINATION_ROOTFS_SPEC}/home/${USER}"
     fi
@@ -39,6 +53,8 @@ init(){
         DESTINATION_DATAFS_SPEC="${DESTINATION_ROOTFS_SPEC}/mnt/data"
     fi
 
+    printf \
+        'Info: Validating boolean parameters...\n'
     local regex_boolean_values='^(true|false)$'
     local -a boolean_parameters=(
         ENABLE_SYNC_USER_DIRS
@@ -70,16 +86,7 @@ init(){
         exit 1
     fi
 
-    printf \
-        'Info: Loading the functions file...\n'
-    # shellcheck source-path=SCRIPTDIR
-    if ! source "${script_dir}/functions.sh.source"; then
-        printf \
-            'Error: Unable to load the functions file.\n' \
-            1>&2
-        exit 2
-    fi
-
+    print_progress 'Determining the start timestamp...'
     local -i \
         start_timestamp \
         end_timestamp
@@ -89,7 +96,12 @@ init(){
             1>&2
         exit 2
     fi
+    printf \
+        'Info: Start timestamp: %s(%s).\n' \
+        "$start_timestamp" \
+        "$(date --date="@$start_timestamp" '+%Y-%m-%d %H:%M:%S')"
 
+    print_progress 'Determining the user home directory...'
     if test "${SOURCE_HOMEDIR_SPEC}" == auto; then
         if ! user_home_dir="$(
             getent passwd "${USER}" \
@@ -103,6 +115,9 @@ init(){
     else
         user_home_dir="${SOURCE_HOMEDIR_SPEC}"
     fi
+    printf \
+        'Info: User home directory determined to be: %s.\n' \
+        "${user_home_dir}"
 
     if test "${ENABLE_SYNC_USER_DIRS}" == true; then
         if ! sync_user_dirs \
@@ -219,12 +234,18 @@ init(){
         fi
     fi
 
+    print_progress 'Determining the end timestamp...'
     if ! end_timestamp="$(printf '%(%s)T')"; then
         printf \
             'Error: Unable to determine the end timestamp.\n' \
             1>&2
         exit 2
     fi
+    printf \
+        'Info: End timestamp: %s(%s).\n' \
+        "${end_timestamp}" \
+        "$(date --date="@${end_timestamp}" '+%Y-%m-%d %H:%M:%S')"
+
     printf \
         'Info: Runtime: %s.\n' \
         "$(
@@ -238,7 +259,7 @@ sync_user_dirs(){
     local user_home_dir="${1}"; shift 1
     local destination_homedir_spec="${1}"; shift 1
 
-    printf 'Info: Syncing common user directories...\n'
+    print_progress 'Syncing common user directories...'
 
     user_dirs_file="${user_home_dir}/.config/user-dirs.dirs"
     if ! test -e "${user_dirs_file}"; then
@@ -339,6 +360,8 @@ sync_steam_library(){
     local destination_homedir_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
+    print_progress 'Syncing Steam library...'
+
     steam_library_dir="${user_home_dir}/.local/share/Steam"
     if ! test -e "${steam_library_dir}"; then
         printf \
@@ -346,9 +369,6 @@ sync_steam_library(){
             1>&2
         return 0
     fi
-
-    printf \
-        'Info: Syncing Steam library...\n'
 
     if ! rsync \
         "${rsync_options[@]}" \
@@ -366,7 +386,7 @@ sync_ssh_config_and_keys(){
     local destination_homedir_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
-    printf 'Info: Syncing SSH configuration and keys...\n'
+    print_progress 'Syncing SSH configuration and keys...\n'
     if ! rsync \
         "${rsync_options[@]}" \
         "${user_home_dir}/.ssh/" \
@@ -382,7 +402,7 @@ sync_data_filesystem(){
     local destination_datafs_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
-    printf 'Info: Syncing data filesystem...\n'
+    print_progress 'Syncing data filesystem...'
     local datafs_dir=/mnt/data
     if ! test -e "${datafs_dir}"; then
         printf \
@@ -408,7 +428,7 @@ sync_gnupg_config_and_keys(){
     local destination_homedir_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
-    printf 'Info: Syncing GnuPG configuration and keys...\n'
+    print_progress 'Syncing GnuPG configuration and keys...'
     local gpg_home_dir="${user_home_dir}/.gnupg"
 
     if ! test -e "${gpg_home_dir}"; then
@@ -435,7 +455,7 @@ sync_firefox_data(){
     local destination_homedir_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
-    printf 'Info: Syncing Firefox data...\n'
+    print_progress 'Syncing Firefox data...'
     local firefox_data_dir_relative=/snap/firefox/common/.mozilla
     local source_firefox_data_dir="${user_home_dir}${firefox_data_dir_relative}"
     local destination_firefox_data_dir_spec="${destination_homedir_spec}${firefox_data_dir_relative}"
@@ -468,7 +488,7 @@ sync_bash_history(){
     local destination_homedir_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
-    printf 'Info: Syncing Bash history...\n'
+    print_progress 'Syncing Bash history...'
     local bash_history_file_relative=/.bash_history
     local source_bash_history_file="${user_home_dir}${bash_history_file_relative}"
     local destination_bash_history_file_spec="${destination_homedir_spec}${bash_history_file_relative}"
@@ -497,7 +517,7 @@ sync_gnome_keyring(){
     local destination_homedir_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
-    printf 'Info: Syncing GNOME keyring...\n'
+    print_progress 'Syncing GNOME keyring...'
     local gnome_keyring_data_dir_relative=/.local/share/keyrings
     local source_gnome_keyring_data_dir="${user_home_dir}${gnome_keyring_data_dir_relative}"
     local destination_gnome_keyring_data_dir_spec="${destination_homedir_spec}${gnome_keyring_data_dir_relative}"
@@ -526,7 +546,7 @@ sync_kde_wallet(){
     local destination_homedir_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
-    printf 'Info: Syncing KDE Wallet...\n'
+    print_progress 'Syncing KDE Wallet...'
     local kde_wallet_data_dir_relative=/.local/share/kwalletd
     local source_kde_wallet_data_dir="${user_home_dir}${kde_wallet_data_dir_relative}"
     local destination_kde_wallet_data_dir_spec="${destination_homedir_spec}${kde_wallet_data_dir_relative}"
@@ -555,7 +575,7 @@ sync_user_applications(){
     local destination_homedir_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
-    printf 'Info: Syncing user applications...\n'
+    print_progress 'Syncing user applications...'
     local user_applications_dir_relative=/應用軟體
     local source_user_applications_dir="${user_home_dir}${user_applications_dir_relative}"
     local destination_user_applications_dir_spec="${destination_homedir_spec}${user_applications_dir_relative}"
@@ -606,7 +626,7 @@ sync_kde_connect(){
     local destination_homedir_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
-    printf 'Info: Syncing KDE Connect data...\n'
+    print_progress 'Syncing KDE Connect data...'
     local kde_connect_data_dir_relative=/.config/kdeconnect
     local source_kde_connect_data_dir="${user_home_dir}${kde_connect_data_dir_relative}"
     local destination_kde_connect_data_dir_spec="${destination_homedir_spec}${kde_connect_data_dir_relative}"
@@ -637,7 +657,7 @@ sync_vbox_vms(){
     local destination_vbox_vm_dir="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
-    printf 'Info: Syncing VirtualBox VMs...\n'
+    print_progress 'Syncing VirtualBox VMs...'
 
     if test -z "${source_vbox_vm_dir}"; then
         source_vbox_vm_dir="${user_home_dir}/VirtualBox VMs"
@@ -695,6 +715,7 @@ trap trap_err ERR
 
 required_commands=(
     cut
+    date
     getent
     realpath
     rsync
@@ -736,8 +757,6 @@ fi
     fi
 }
 
-printf \
-    'Info: Configuring the defensive interpreter behaviors...\n'
 set_opts=(
     -o errexit
     -o errtrace
@@ -751,8 +770,6 @@ if ! set "${set_opts[@]}"; then
     exit 2
 fi
 
-printf \
-    'Info: Configuring the nullglob shell option...\n'
 if ! shopt -s nullglob; then
     printf \
         'Error: Unable to configure the nullglob shell option.\n' \

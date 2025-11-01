@@ -5,8 +5,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 init(){
-    printf \
-        'Info: Loading the configuration file...\n'
+    # shellcheck source-path=SCRIPTDIR
+    if ! source "${script_dir}/functions.sh.source"; then
+        printf \
+            'Error: Unable to load the functions file.\n' \
+            1>&2
+        exit 2
+    fi
+
+    pritn_progress 'Loading the configuration file...'
     # shellcheck source=SCRIPTDIR/config.sh.source
     if ! source "${script_dir}/config.sh.source"; then
         printf \
@@ -15,8 +22,9 @@ init(){
         exit 2
     fi
 
+    print_progress 'Checking runtime parameters...'
     printf \
-        'Info: Checking runtime parameters...\n'
+        'Info: Checking the running user...\n'
     if test "${EUID}" != 0; then
         printf \
             'Error: This program should be run as the superuser(root).\n' \
@@ -24,6 +32,8 @@ init(){
         exit 1
     fi
 
+    printf \
+        'Info: Checking the DESTINATION_ROOTFS_SPEC parameter...\n'
     if test "${DESTINATION_ROOTFS_SPEC}" == unset; then
         printf \
             'Error: The DESTINATION_ROOTFS_SPEC parameter is not set.\n' \
@@ -31,6 +41,8 @@ init(){
         exit 1
     fi
 
+    printf \
+        'Info: Checking the SOURCE_ROOTFS_SPEC parameter...\n'
     if ! is_rsync_remote_specification "${SOURCE_ROOTFS_SPEC}" \
         && ! test -e "${SOURCE_ROOTFS_SPEC}"; then
         printf \
@@ -40,6 +52,8 @@ init(){
         exit 1
     fi
 
+    printf \
+        'Info: Checking the boolean parameters...\n'
     local regex_boolean_values='^(true|false)$'
     local -a boolean_parameters=(
         ENABLE_SYNC_WIREGUARD_CONFIG
@@ -48,6 +62,8 @@ init(){
         ENABLE_SYNC_NETPLAN_CONFIG
         ENABLE_SYNC_FPRINTD_DATA
         ENABLE_SYNC_UNMANAGED_APPS
+        ENABLE_SYNC_MACHINE_OWNER_KEYS
+        ENABLE_SYNC_SSH_HOST_KEYS
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -67,25 +83,20 @@ init(){
         exit 1
     fi
 
-    printf \
-        'Info: Loading the functions file...\n'
-    # shellcheck source-path=SCRIPTDIR
-    if ! source "${script_dir}/functions.sh.source"; then
-        printf \
-            'Error: Unable to load the functions file.\n' \
-            1>&2
-        exit 2
-    fi
-
     local -i \
         start_timestamp \
         end_timestamp
+    print_progress 'Determining the start timestamp...'
     if ! start_timestamp="$(printf '%(%s)T')"; then
         printf \
             'Error: Unable to determine the start timestamp.\n' \
             1>&2
         exit 2
     fi
+    printf \
+        'Info: Start timestamp: %s(%s).\n' \
+        "${start_timestamp}" \
+        "$(date --date="@${start_timestamp}" '+%Y-%m-%d %H:%M:%S')"
 
     if test "${ENABLE_SYNC_WIREGUARD_CONFIG}" == true; then
         if ! sync_wireguard_configuration \
@@ -183,12 +194,18 @@ init(){
         fi
     fi
 
+    print_progress 'Determining the end timestamp...'
     if ! end_timestamp="$(printf '%(%s)T')"; then
         printf \
             'Error: Unable to determine the end timestamp.\n' \
             1>&2
         exit 2
     fi
+    printf \
+        'Info: End timestamp: %s(%s).\n' \
+        "${end_timestamp}" \
+        "$(date --date="@${end_timestamp}" '+%Y-%m-%d %H:%M:%S')"
+
     printf \
         'Info: Runtime: %s.\n' \
         "$(
@@ -203,14 +220,18 @@ sync_wireguard_configuration(){
     local destination_rootfs_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
+    print_progress 'Syncing the WireGuard configuration files...'
+
     local wireguard_config_dir=/etc/wireguard
     local wireguard_config_dir_spec="${source_rootfs_spec%/}${wireguard_config_dir}"
     if ! is_rsync_remote_specification "${wireguard_config_dir_spec}" \
         && ! test -e "${wireguard_config_dir}"; then
+        printf \
+            'Warning: The WireGuard configuration directory does not exist. Skipping...\n' \
+            1>&2
         return 0
     fi
 
-    printf 'Info: Syncing the WireGuard configuration files...\n'
     if ! rsync \
         "${rsync_options[@]}" \
         "${wireguard_config_dir_spec}" \
@@ -227,14 +248,17 @@ sync_udpraw_installation(){
     local destination_rootfs_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
+    print_progress 'Syncing the udp2raw installation...'
     local udp2raw_installation_dir=/opt/udp2raw
     local udp2raw_config_dir_spec="${source_rootfs_spec%/}${udp2raw_installation_dir}"
     if ! is_rsync_remote_specification "${udp2raw_config_dir_spec}" \
         && ! test -e "${udp2raw_installation_dir}"; then
+        printf \
+            'Warning: The udp2raw installation directory does not exist. Skipping...\n' \
+            1>&2
         return 0
     fi
 
-    printf 'Info: Syncing the udp2raw installation...\n'
     if ! rsync \
         "${rsync_options[@]}" \
         "${udp2raw_config_dir_spec}" \
@@ -251,6 +275,7 @@ sync_bluetoothd_data(){
     local destination_rootfs_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
+    print_progress 'Syncing the bluetooth daemon data...'
     local bluetoothd_data_dir=/var/lib/bluetooth
     local bluetoothd_data_dir_spec="${source_rootfs_spec%/}${bluetoothd_data_dir}"
     if ! is_rsync_remote_specification "${bluetoothd_data_dir_spec}" \
@@ -258,8 +283,6 @@ sync_bluetoothd_data(){
         return 0
     fi
 
-    printf \
-        'Info: Syncing the bluetooth daemon data...\n'
     if ! rsync \
         "${rsync_options[@]}" \
         "${bluetoothd_data_dir_spec}/" \
@@ -276,6 +299,7 @@ sync_netplan_config(){
     local destination_rootfs_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
+    print_progress 'Syncing the Netplan configuration files...'
     local netplan_config_dir=/etc/netplan
     local netplan_config_dir_spec="${source_rootfs_spec%/}${netplan_config_dir}"
     if ! is_rsync_remote_specification "${netplan_config_dir_spec}" \
@@ -283,8 +307,6 @@ sync_netplan_config(){
         return 0
     fi
 
-    printf \
-        'Info: Syncing the Netplan configuration files...\n'
     if ! rsync \
         "${rsync_options[@]}" \
         "${netplan_config_dir_spec}/" \
@@ -301,6 +323,7 @@ sync_fprintd_data(){
     local destination_rootfs_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
+    print_progress 'Syncing the fingerprint daemon data...'
     local fprintd_data_dir=/var/lib/fprint
     local fprintd_data_dir_spec="${source_rootfs_spec%/}${fprintd_data_dir}"
     if ! is_rsync_remote_specification "${fprintd_data_dir_spec}" \
@@ -308,8 +331,6 @@ sync_fprintd_data(){
         return 0
     fi
 
-    printf \
-        'Info: Syncing the fingerprint daemon data...\n'
     if ! rsync \
         "${rsync_options[@]}" \
         "${fprintd_data_dir}/" \
@@ -326,15 +347,17 @@ sync_unmanaged_apps(){
     local destination_rootfs_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
+    print_progress 'Syncing the unmanaged software installations...'
     local unmanaged_apps_dir=/opt
     local unmanaged_apps_dir_spec="${source_rootfs_spec%/}${unmanaged_apps_dir}"
     if ! is_rsync_remote_specification "${unmanaged_apps_dir_spec}" \
         && ! test -e "${unmanaged_apps_dir}"; then
+        printf \
+            'Warning: The unmanaged software installations directory does not exist. Skipping...\n' \
+            1>&2
         return 0
     fi
 
-    printf \
-        'Info: Syncing the unmanaged software installations...\n'
     if ! rsync \
         "${rsync_options[@]}" \
         "${unmanaged_apps_dir}/" \
@@ -351,15 +374,17 @@ sync_machine_owner_keys(){
     local destination_rootfs_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
+    print_progress 'Syncing the machine owner keys...'
     local machine_owner_keys_dir=/var/lib/shim-signed/mok
     local machine_owner_keys_dir_spec="${source_rootfs_spec%/}${machine_owner_keys_dir}"
     if ! is_rsync_remote_specification "${machine_owner_keys_dir_spec}" \
         && ! test -e "${machine_owner_keys_dir}"; then
+        printf \
+            'Warning: The machine owner keys directory does not exist. Skipping...\n' \
+            1>&2
         return 0
     fi
 
-    printf \
-        'Info: Syncing the machine owner keys...\n'
     if ! rsync \
         "${rsync_options[@]}" \
         "${machine_owner_keys_dir_spec}/" \
@@ -376,15 +401,17 @@ sync_ssh_host_keys(){
     local destination_rootfs_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
 
+    print_progress 'Syncing the SSH host keys...'
     local ssh_host_keys_dir=/etc/ssh
     local ssh_host_keys_dir_spec="${source_rootfs_spec%/}${ssh_host_keys_dir}"
     if ! is_rsync_remote_specification "${ssh_host_keys_dir_spec}" \
         && ! test -e "${ssh_host_keys_dir}"; then
+        printf \
+            'Warning: The SSH host keys directory does not exist. Skipping...\n' \
+            1>&2
         return 0
     fi
 
-    printf \
-        'Info: Syncing the SSH host keys...\n'
     if ! rsync \
         "${rsync_options[@]}" \
         --include='ssh_host_*_key*' \
@@ -432,8 +459,6 @@ trap trap_err ERR
     fi
 }
 
-printf \
-    'Info: Configuring the defensive interpreter behaviors...\n'
 set_opts=(
     -o errexit
     -o errtrace
@@ -449,6 +474,7 @@ fi
 
 required_commands=(
     cut
+    date
     getent
     realpath
     rsync
