@@ -14,6 +14,18 @@ This product comprises of two utilities:
 
 Both utilities are required to be run as the superuser(root) and uses the same configuration file([config.sh.source](config.sh.source)).
 
+Refer to the following instructions to use the product:
+
+1. Download the release package from the [Releases](https://gitlab.com/brlin/migrate-rootfs-utilities/-/releases) page.
+1. Extract the release package.
+1. Refer to the [Configuration variables](#configuration-variables-that-can-change-the-migration-utilities-behaviors) section and edit the configuration file([config.sh.source](config.sh.source)) to suit your environment.
+1. Run the migration utilities as the superuser(root) to migrate the data:
+
+    ```bash
+    sudo ./migrate-personal-data.sh
+    sudo ./migrate-system-data.sh
+    ```
+
 ## Configuration variables that can change the migration utilities' behaviors
 
 The following configuration variables can change the migration utilities' behaviors:
@@ -28,6 +40,12 @@ Specifies the Rsync specification of the destination root filesystem (could be a
 
 Setting this configuration variable is mandatory.
 
+#### SOURCE_ROOTFS_SPEC
+
+Specifies the Rsync specification of the source root filesystem (could be a remote path).
+
+**Default value:** `/` (The local root filesystem.)
+
 ### migrate-personal-data
 
 The following configuration variables are only used in the migrate-personal-data utility:
@@ -37,6 +55,12 @@ The following configuration variables are only used in the migrate-personal-data
 Specifies the Rsync specification of the destination user home directory (could be a remote path).
 
 **Default value:** `auto`(Automatically determine the path using the value of the DESTINATION_ROOTFS_SPEC configuration variable.)
+
+#### SOURCE_HOMEDIR_SPEC
+
+Specifies the Rsync specification of the source user home directory (could be a remote path).
+
+**Default value:** `auto`(Automatically determine the path using password database.)
 
 #### DESTINATION_DATAFS_SPEC
 
