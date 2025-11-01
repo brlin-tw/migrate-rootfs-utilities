@@ -3,46 +3,6 @@
 #
 # Copyright 2025 林博仁(Buo-ren Lin) <buo.ren.lin@gmail.com>
 # SPDX-License-Identifier: AGPL-3.0-or-later
-USER=brlin
-
-DESTINATION_ROOTFS_SPEC="${DESTINATION_ROOTFS_SPEC:-unset}"
-DESTINATION_HOMEDIR_SPEC="${DESTINATION_HOMEDIR_SPEC:-auto}"
-DESTINATION_DATAFS_SPEC="${DESTINATION_DATAFS_SPEC:-auto}"
-
-ENABLE_SYNC_USER_DIRS="${ENABLE_SYNC_USER_DIRS:-true}"
-ENABLE_SYNC_STEAM_LIBRARY="${ENABLE_SYNC_STEAM_LIBRARY:-true}"
-ENABLE_SYNC_SSH_CONFIG_KEYS="${ENABLE_SYNC_SSH_CONFIG_KEYS:-true}"
-ENABLE_SYNC_DATAFS="${ENABLE_SYNC_DATAFS:-true}"
-ENABLE_SYNC_GPG_CONFIG_KEYS="${ENABLE_SYNC_GPG_CONFIG_KEYS:-true}"
-ENABLE_SYNC_FIREFOX_DATA="${ENABLE_SYNC_FIREFOX_DATA:-true}"
-ENABLE_SYNC_BASH_HISTORY="${ENABLE_SYNC_BASH_HISTORY:-true}"
-ENABLE_SYNC_GNOME_KEYRING="${ENABLE_SYNC_GNOME_KEYRING:-true}"
-ENABLE_SYNC_KDE_WALLET="${ENABLE_SYNC_KDE_WALLET:-true}"
-ENABLE_SYNC_USER_APPLICATIONS="${ENABLE_SYNC_USER_APPLICATIONS:-true}"
-
-COMMON_RSYNC_OPTIONS=(
-    --archive
-    --acls
-    --exclude '*~'
-    --exclude '*.log'
-    --exclude '*.log.*'
-    --exclude '*.old'
-    --exclude nohup.out
-    --one-file-system
-    --human-readable
-    --human-readable
-
-    # COMPAT: Not supported in old version
-    #--mkpath
-
-    --progress
-    --verbose
-    --xattrs
-
-    --delete
-    --delete-after
-    --delete-excluded
-)
 
 init(){
     printf \
@@ -661,6 +621,16 @@ printf \
 if ! shopt -s nullglob; then
     printf \
         'Error: Unable to configure the nullglob shell option.\n' \
+        1>&2
+    exit 2
+fi
+
+printf \
+    'Info: Loading the configuration file...\n'
+# shellcheck source=SCRIPTDIR/config.sh.source
+if ! source "${script_dir}/config.sh.source"; then
+    printf \
+        'Error: Unable to load the configuration file.\n' \
         1>&2
     exit 2
 fi

@@ -3,47 +3,6 @@
 #
 # Copyright 2025 林博仁(Buo-ren Lin) <buo.ren.lin@gmail.com>
 # SPDX-License-Identifier: AGPL-3.0-or-later
-DESTINATION_ROOTFS_SPEC="${DESTINATION_ROOTFS_SPEC:-unset}"
-
-ENABLE_SYNC_WIREGUARD_CONFIG="${ENABLE_SYNC_WIREGUARD_CONFIG:-true}"
-ENABLE_SYNC_UDP2RAW_INSTALLATION="${ENABLE_SYNC_UDP2RAW_INSTALLATION:-true}"
-ENABLE_SYNC_BLUETOOTHD_DATA="${ENABLE_SYNC_BLUETOOTHD_DATA:-true}"
-ENABLE_SYNC_NETPLAN_CONFIG="${ENABLE_SYNC_NETPLAN_CONFIG:-true}"
-ENABLE_SYNC_FPRINTD_DATA="${ENABLE_SYNC_FPRINTD_DATA:-true}"
-ENABLE_SYNC_UNMANAGED_APPS="${ENABLE_SYNC_UNMANAGED_APPS:-true}"
-
-COMMON_RSYNC_OPTIONS=(
-    --archive
-    --acls
-    --exclude '*~'
-    --exclude '*.log'
-    --exclude '*.log.*'
-    --exclude '*.old'
-    --exclude nohup.out
-    --one-file-system
-    --human-readable
-    --human-readable
-
-    # COMPAT: Not supported in old version
-    #--mkpath
-
-    --progress
-    --verbose
-    --xattrs
-
-    --delete
-    --delete-after
-)
-
-UNMANAGED_APPS_RSYNC_OPTIONS=(
-    "${COMMON_RSYNC_OPTIONS[@]}"
-
-    # Exclude common package installation directories
-    --exclude /containerd/
-    --exclude /google/
-    --exclude /megasync/
-    --exclude /vagrant/
-)
 
 init(){
     printf \
@@ -365,6 +324,16 @@ set_opts=(
 if ! set "${set_opts[@]}"; then
     printf \
         'Error: Unable to configure the defensive interpreter behaviors.\n' \
+        1>&2
+    exit 2
+fi
+
+printf \
+    'Info: Loading the configuration file...\n'
+# shellcheck source=SCRIPTDIR/config.sh.source
+if ! source "${script_dir}/config.sh.source"; then
+    printf \
+        'Error: Unable to load the configuration file.\n' \
         1>&2
     exit 2
 fi

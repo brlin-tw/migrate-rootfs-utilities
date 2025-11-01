@@ -1,0 +1,62 @@
+# Configuration file
+#
+# Copyright 2025 林博仁(Buo-ren Lin) <buo.ren.lin@gmail.com>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+USER=brlin
+
+DESTINATION_ROOTFS_SPEC="${DESTINATION_ROOTFS_SPEC:-unset}"
+DESTINATION_HOMEDIR_SPEC="${DESTINATION_HOMEDIR_SPEC:-auto}"
+DESTINATION_DATAFS_SPEC="${DESTINATION_DATAFS_SPEC:-auto}"
+
+ENABLE_SYNC_USER_DIRS="${ENABLE_SYNC_USER_DIRS:-true}"
+ENABLE_SYNC_STEAM_LIBRARY="${ENABLE_SYNC_STEAM_LIBRARY:-true}"
+ENABLE_SYNC_SSH_CONFIG_KEYS="${ENABLE_SYNC_SSH_CONFIG_KEYS:-true}"
+ENABLE_SYNC_DATAFS="${ENABLE_SYNC_DATAFS:-true}"
+ENABLE_SYNC_GPG_CONFIG_KEYS="${ENABLE_SYNC_GPG_CONFIG_KEYS:-true}"
+ENABLE_SYNC_FIREFOX_DATA="${ENABLE_SYNC_FIREFOX_DATA:-true}"
+ENABLE_SYNC_BASH_HISTORY="${ENABLE_SYNC_BASH_HISTORY:-true}"
+ENABLE_SYNC_GNOME_KEYRING="${ENABLE_SYNC_GNOME_KEYRING:-true}"
+ENABLE_SYNC_KDE_WALLET="${ENABLE_SYNC_KDE_WALLET:-true}"
+ENABLE_SYNC_USER_APPLICATIONS="${ENABLE_SYNC_USER_APPLICATIONS:-true}"
+ENABLE_SYNC_WIREGUARD_CONFIG="${ENABLE_SYNC_WIREGUARD_CONFIG:-true}"
+ENABLE_SYNC_UDP2RAW_INSTALLATION="${ENABLE_SYNC_UDP2RAW_INSTALLATION:-true}"
+ENABLE_SYNC_BLUETOOTHD_DATA="${ENABLE_SYNC_BLUETOOTHD_DATA:-true}"
+ENABLE_SYNC_NETPLAN_CONFIG="${ENABLE_SYNC_NETPLAN_CONFIG:-true}"
+ENABLE_SYNC_FPRINTD_DATA="${ENABLE_SYNC_FPRINTD_DATA:-true}"
+ENABLE_SYNC_UNMANAGED_APPS="${ENABLE_SYNC_UNMANAGED_APPS:-true}"
+
+COMMON_RSYNC_OPTIONS=(
+    --archive
+    --acls
+    --exclude '*~'
+    --exclude '*.log'
+    --exclude '*.log.*'
+    --exclude '*.old'
+    --exclude nohup.out
+    --one-file-system
+    --human-readable
+    --human-readable
+
+    # COMPAT: Not supported in old version
+    #--mkpath
+
+    --progress
+    --verbose
+    --xattrs
+
+    --delete
+    --delete-after
+    --delete-excluded
+)
+
+DESTINATION_ROOTFS_SPEC="${DESTINATION_ROOTFS_SPEC:-unset}"
+
+UNMANAGED_APPS_RSYNC_OPTIONS=(
+    "${COMMON_RSYNC_OPTIONS[@]}"
+
+    # Exclude common package installation directories
+    --exclude /containerd/
+    --exclude /google/
+    --exclude /megasync/
+    --exclude /vagrant/
+)
