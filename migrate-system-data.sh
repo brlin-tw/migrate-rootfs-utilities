@@ -159,40 +159,6 @@ init(){
         )"
 }
 
-trap_err(){
-    printf \
-        '\nScript prematurely aborted on the "%s" command at the line %s of the %s function with the exit status %u.\n' \
-        "${BASH_COMMAND}" \
-        "${BASH_LINENO[0]}" \
-        "${FUNCNAME[1]}" \
-        "${?}" \
-        1>&2
-}
-trap trap_err ERR
-
-# Convenience variable definitions
-# shellcheck disable=SC2034
-{
-    if ! test -v BASH_SOURCE; then
-        script_path=_stdin_
-        script_name=_stdin_
-        script_filename=_stdin_
-        script_basecommand=_null_
-        script_dir=_null_
-    else
-        script_path="$(
-            realpath \
-                --strip \
-                "${BASH_SOURCE[0]}"
-        )"
-        script_filename="${BASH_SOURCE##*/}"
-        script_dir="${script_path%/*}"
-        script_name="${script_filename%%.*}"
-        script_basecommand="${0}"
-        script_args=("${@}")
-    fi
-}
-
 sync_wireguard_configuration(){
     local destination_rootfs_spec="${1}"; shift 1
     local -a rsync_options=("${@}"); set --
@@ -320,6 +286,40 @@ sync_unmanaged_apps(){
             'Error: Unable to sync the unmanaged software installations.\n' \
             1>&2
         return 2
+    fi
+}
+
+trap_err(){
+    printf \
+        '\nScript prematurely aborted on the "%s" command at the line %s of the %s function with the exit status %u.\n' \
+        "${BASH_COMMAND}" \
+        "${BASH_LINENO[0]}" \
+        "${FUNCNAME[1]}" \
+        "${?}" \
+        1>&2
+}
+trap trap_err ERR
+
+# Convenience variable definitions
+# shellcheck disable=SC2034
+{
+    if ! test -v BASH_SOURCE; then
+        script_path=_stdin_
+        script_name=_stdin_
+        script_filename=_stdin_
+        script_basecommand=_null_
+        script_dir=_null_
+    else
+        script_path="$(
+            realpath \
+                --strip \
+                "${BASH_SOURCE[0]}"
+        )"
+        script_filename="${BASH_SOURCE##*/}"
+        script_dir="${script_path%/*}"
+        script_name="${script_filename%%.*}"
+        script_basecommand="${0}"
+        script_args=("${@}")
     fi
 }
 
