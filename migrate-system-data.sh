@@ -225,7 +225,7 @@ sync_wireguard_configuration(){
     local wireguard_config_dir=/etc/wireguard
     local wireguard_config_dir_spec="${source_rootfs_spec%/}${wireguard_config_dir}"
     if ! is_rsync_remote_specification "${wireguard_config_dir_spec}" \
-        && ! test -e "${wireguard_config_dir}"; then
+        && ! test -e "${wireguard_config_dir_spec}"; then
         printf \
             'Warning: The WireGuard configuration directory does not exist. Skipping...\n' \
             1>&2
@@ -250,9 +250,9 @@ sync_udpraw_installation(){
 
     print_progress 'Syncing the udp2raw installation...'
     local udp2raw_installation_dir=/opt/udp2raw
-    local udp2raw_config_dir_spec="${source_rootfs_spec%/}${udp2raw_installation_dir}"
-    if ! is_rsync_remote_specification "${udp2raw_config_dir_spec}" \
-        && ! test -e "${udp2raw_installation_dir}"; then
+    local udp2raw_installation_dir_spec="${source_rootfs_spec%/}${udp2raw_installation_dir}"
+    if ! is_rsync_remote_specification "${udp2raw_installation_dir_spec}" \
+        && ! test -e "${udp2raw_installation_dir_spec}"; then
         printf \
             'Warning: The udp2raw installation directory does not exist. Skipping...\n' \
             1>&2
@@ -261,7 +261,7 @@ sync_udpraw_installation(){
 
     if ! rsync \
         "${rsync_options[@]}" \
-        "${udp2raw_config_dir_spec}" \
+        "${udp2raw_installation_dir_spec}" \
         "${destination_rootfs_spec}/opt"; then
         printf \
             'Error: Unable to sync the udp2raw installation.\n' \
@@ -279,7 +279,7 @@ sync_bluetoothd_data(){
     local bluetoothd_data_dir=/var/lib/bluetooth
     local bluetoothd_data_dir_spec="${source_rootfs_spec%/}${bluetoothd_data_dir}"
     if ! is_rsync_remote_specification "${bluetoothd_data_dir_spec}" \
-        && ! test -e "${bluetoothd_data_dir}"; then
+        && ! test -e "${bluetoothd_data_dir_spec}"; then
         return 0
     fi
 
@@ -303,7 +303,7 @@ sync_netplan_config(){
     local netplan_config_dir=/etc/netplan
     local netplan_config_dir_spec="${source_rootfs_spec%/}${netplan_config_dir}"
     if ! is_rsync_remote_specification "${netplan_config_dir_spec}" \
-        && ! test -e "${netplan_config_dir}"; then
+        && ! test -e "${netplan_config_dir_spec}"; then
         return 0
     fi
 
@@ -327,13 +327,13 @@ sync_fprintd_data(){
     local fprintd_data_dir=/var/lib/fprint
     local fprintd_data_dir_spec="${source_rootfs_spec%/}${fprintd_data_dir}"
     if ! is_rsync_remote_specification "${fprintd_data_dir_spec}" \
-        && ! test -e "${fprintd_data_dir}"; then
+        && ! test -e "${fprintd_data_dir_spec}"; then
         return 0
     fi
 
     if ! rsync \
         "${rsync_options[@]}" \
-        "${fprintd_data_dir}/" \
+        "${fprintd_data_dir_spec}/" \
         "${destination_rootfs_spec}${fprintd_data_dir}"; then
         printf \
             'Error: Unable to sync the fingerprint daemon data.\n' \
@@ -351,7 +351,7 @@ sync_unmanaged_apps(){
     local unmanaged_apps_dir=/opt
     local unmanaged_apps_dir_spec="${source_rootfs_spec%/}${unmanaged_apps_dir}"
     if ! is_rsync_remote_specification "${unmanaged_apps_dir_spec}" \
-        && ! test -e "${unmanaged_apps_dir}"; then
+        && ! test -e "${unmanaged_apps_dir_spec}"; then
         printf \
             'Warning: The unmanaged software installations directory does not exist. Skipping...\n' \
             1>&2
@@ -360,7 +360,7 @@ sync_unmanaged_apps(){
 
     if ! rsync \
         "${rsync_options[@]}" \
-        "${unmanaged_apps_dir}/" \
+        "${unmanaged_apps_dir_spec}/" \
         "${destination_rootfs_spec}${unmanaged_apps_dir}"; then
         printf \
             'Error: Unable to sync the unmanaged software installations.\n' \
@@ -378,7 +378,7 @@ sync_machine_owner_keys(){
     local machine_owner_keys_dir=/var/lib/shim-signed/mok
     local machine_owner_keys_dir_spec="${source_rootfs_spec%/}${machine_owner_keys_dir}"
     if ! is_rsync_remote_specification "${machine_owner_keys_dir_spec}" \
-        && ! test -e "${machine_owner_keys_dir}"; then
+        && ! test -e "${machine_owner_keys_dir_spec}"; then
         printf \
             'Warning: The machine owner keys directory does not exist. Skipping...\n' \
             1>&2
@@ -405,7 +405,7 @@ sync_ssh_host_keys(){
     local ssh_host_keys_dir=/etc/ssh
     local ssh_host_keys_dir_spec="${source_rootfs_spec%/}${ssh_host_keys_dir}"
     if ! is_rsync_remote_specification "${ssh_host_keys_dir_spec}" \
-        && ! test -e "${ssh_host_keys_dir}"; then
+        && ! test -e "${ssh_host_keys_dir_spec}"; then
         printf \
             'Warning: The SSH host keys directory does not exist. Skipping...\n' \
             1>&2
