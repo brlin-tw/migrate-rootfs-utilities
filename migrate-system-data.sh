@@ -13,7 +13,7 @@ init(){
         exit 2
     fi
 
-    pritn_progress 'Loading the configuration file...'
+    print_progress 'Loading the configuration file...'
     # shellcheck source=SCRIPTDIR/config.sh.source
     if ! source "${script_dir}/config.sh.source"; then
         printf \
