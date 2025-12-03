@@ -462,7 +462,6 @@ trap trap_err ERR
 set_opts=(
     -o errexit
     -o errtrace
-    -o pipefail
     -o nounset
 )
 if ! set "${set_opts[@]}"; then
