@@ -1,6 +1,6 @@
 # Configuration file
 #
-# Copyright 2025 林博仁(Buo-ren Lin) <buo.ren.lin@gmail.com>
+# Copyright 2026 林博仁(Buo-ren Lin) <buo.ren.lin@gmail.com>
 # SPDX-License-Identifier: AGPL-3.0-or-later
 USER=brlin
 
@@ -57,6 +57,16 @@ COMMON_RSYNC_OPTIONS=(
     --delete
     --delete-after
     --delete-excluded
+)
+
+# This workarounds issues where the value of the "user.wine.sd" extended attribute on certain Wine-created files from the BTRFS filesystem[1] are too big to be stored in the destination file system(e.g. EXT4)[2].
+#
+# [1]: linux - Btrfs - max xattr size? - Unix & Linux Stack Exchange <https://unix.stackexchange.com/a/593205/158581>
+# [2]: linux - What are costs of storing xattrs on ext4, btrfs filesystems? - Unix & Linux Stack Exchange <https://unix.stackexchange.com/a/495126/158581>
+STEAM_RSYNC_OPTIONS=(
+    "${COMMON_RSYNC_OPTIONS[@]}"
+    --filter='-x system.*'
+    --filter='-x user.wine.sd'
 )
 
 UNMANAGED_APPS_RSYNC_OPTIONS=(

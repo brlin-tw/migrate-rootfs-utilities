@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Backup personal data to another medium
 #
-# Copyright 2025 林博仁(Buo-ren Lin) <buo.ren.lin@gmail.com>
+# Copyright 2026 林博仁(Buo-ren Lin) <buo.ren.lin@gmail.com>
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 init(){
@@ -134,7 +134,7 @@ init(){
         if ! sync_steam_library \
             "${user_home_dir}" \
             "${DESTINATION_HOMEDIR_SPEC}" \
-            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            "${STEAM_RSYNC_OPTIONS[@]}"; then
             printf \
                 'Error: Unable to sync Steam library.\n' \
                 1>&2
