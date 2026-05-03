@@ -309,97 +309,117 @@ sync_user_dirs(){
     user_dirs_file="${user_home_dir}/.config/user-dirs.dirs"
     if ! test -e "${user_dirs_file}"; then
         printf \
-            '%s: Error: This function requires the user-dirs definition file to exist.\n' \
+            '%s: Warning: The user-dirs definition file does not exist, skipping...\n' \
             "${FUNCNAME[0]}" \
             1>&2
-        return 1
-    fi
-
-    # Otherwise we'll get root's paths
-    HOME="${user_home_dir}"
-
-    # out of scope
-    # shellcheck source=/dev/null
-    if ! source "${user_dirs_file}"; then
-        printf \
-            '%s: Error: Unable to source the user directories definition file.\n' \\
-            "${FUNCNAME[0]}" \
-            1>&2
-        return 2
-    fi
-
-    user_dirs=()
-    user_dirs_vars=(
-        XDG_DESKTOP_DIR
-        XDG_DOCUMENTS_DIR
-        XDG_DOWNLOAD_DIR
-        XDG_MUSIC_DIR
-        XDG_PICTURES_DIR
-        XDG_PUBLICSHARE_DIR
-        XDG_TEMPLATES_DIR
-        XDG_VIDEOS_DIR
-    )
-    for var in "${user_dirs_vars[@]}"; do
-        # Variable may not be defined
-        if ! test -v "${var}"; then
-            continue
-        fi
-
-        value="${!var}"
-        canonical_path="$(realpath "${value}")"
-        canonical_home="$(realpath "${user_home_dir}")"
-
-        # Variable may be set to $HOME when the folder is once missing
-        if test "${canonical_path}" == "${canonical_home}"; then
+        return 0
+    else
+        # Ensure destination .config exists
+        if ! mkdir -p "${destination_homedir_spec}/.config"; then
             printf \
-                'Warning: The "%s" user directory is a fallback directory, skipping...\n' \
-                "${value}"
-            continue
-        fi
-
-        user_dirs+=("${!var}")
-    done
-
-    user_dirs_rsync_options=(
-        "${COMMON_RSYNC_OPTIONS[@]}"
-        --checksum
-        --delete
-        --delete-after
-        --delete-excluded
-
-        # Don't sync virtual environment directories
-        --exclude .venv/
-        --exclude venv/
-
-        --exclude .vagrant/
-        --exclude cache/
-        --exclude .cache/
-        --exclude "${user_home_dir}/下載/Telegram Desktop/**"
-        --exclude "${user_home_dir}/文件/工作空間/"
-    )
-
-    for dir in "${user_dirs[@]}"; do
-        if ! test -e "${dir}"; then
-            continue
-        fi
-
-        dir_name="${dir##*/}"
-
-        printf \
-            'Info: Syncing the %s user directory...\n' \
-            "${dir_name}"
-
-        if ! rsync \
-            "${user_dirs_rsync_options[@]}" \
-            "${dir}/" \
-            "${destination_homedir_spec}/${dir_name}"; then
-            printf \
-                'Error: Unable to sync the "%s" user directory.\n' \
-                "${dir_name}" \
+                'Error: Unable to create destination .config directory.\n' \
                 1>&2
             return 2
         fi
-    done
+
+        # Sync the user-dirs.dirs file itself
+        if ! rsync \
+            "${user_dirs_rsync_options[@]}" \
+            "${user_dirs_file}" \
+            "${destination_homedir_spec}/.config/user-dirs.dirs"; then
+            printf \
+                'Error: Unable to sync the "%s" user directory definition file.\n' \
+                "user-dirs.dirs" \
+                1>&2
+            return 2
+        fi
+
+        # Otherwise we'll get root's paths
+        HOME="${user_home_dir}"
+
+        # out of scope
+        # shellcheck source=/dev/null
+        if ! source "${user_dirs_file}"; then
+            printf \
+                '%s: Error: Unable to source the user directories definition file.\n' \
+                "${FUNCNAME[0]}" \
+                1>&2
+            return 2
+        fi
+
+        user_dirs=()
+        user_dirs_vars=(
+            XDG_DESKTOP_DIR
+            XDG_DOCUMENTS_DIR
+            XDG_DOWNLOAD_DIR
+            XDG_MUSIC_DIR
+            XDG_PICTURES_DIR
+            XDG_PUBLICSHARE_DIR
+            XDG_TEMPLATES_DIR
+            XDG_VIDEOS_DIR
+        )
+        for var in "${user_dirs_vars[@]}"; do
+            # Variable may not be enough
+            if ! test -v "${var}"; then
+                continue
+            fi
+
+            value="${!var}"
+            canonical_path="$(realpath "${value}")"
+            canonical_home="$(realpath "${user_home_dir}")"
+
+            # Variable may be set to $HOME when the folder is once missing
+            if test "${canonical_path}" == "${canonical_home}"; then
+                printf \
+                    'Warning: The "%s" user directory is a fallback directory, skipping...\n' \
+                    "${value}"
+                continue
+            fi
+
+            user_dirs+=("${!var}")
+        done
+
+        user_dirs_rsync_options=(
+            "${COMMON_RSYNC_OPTIONS[@]}"
+            --checksum
+            --delete
+            --delete-after
+            --delete-excluded
+
+            # Don't sync virtual environment directories
+            --exclude .venv/
+            --exclude venv/
+
+            --exclude .vagrant/
+            --exclude cache/
+            --exclude .cache/
+            --exclude "${user_home_dir}/下載/Telegram Desktop/**"
+            --exclude "${user_home_dir}/文件/工作空間/"
+        )
+
+        for dir in "${user_dirs[@]}"; do
+            if ! test -e "${dir}"; then
+                continue
+            fi
+
+            dir_name="${dir##*/}"
+
+            printf \
+                'Info: Syncing the %s user directory...\n' \
+                "${dir_name}"
+
+            if ! rsync \
+                "${user_dirs_rsync_options[@]}" \
+                "${dir}/" \
+                "${destination_homedir_spec}/${dir_name}"; then
+                printf \
+                    'Error: Unable to sync the "%s" user directory.\n' \
+                    "${dir_name}" \
+                    1>&2
+                return 2
+            fi
+        done
+    fi
 }
 
 sync_steam_library(){
