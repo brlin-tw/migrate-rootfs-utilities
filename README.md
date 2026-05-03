@@ -189,6 +189,13 @@ Whether to sync the NetworkManager user certificates(in the `~/.local/share/netw
 **Supported values:** `true`, `false`.  
 **Default value:** `true`.
 
+#### ENABLE_SYNC_VSCODE_WORKSPACE_STORAGE
+
+Whether to sync the VSCode user workspace storage(in the `~/.config/Code/User/workspaceStorage` directory).  This preserves workspace-scoped data such as GitHub Copilot Chat histories.
+
+**Supported values:** `true`, `false`.  
+**Default value:** `true`.
+
 ### migrate-system-data
 
 The following configuration variables are only used in the migrate-system-data utility:

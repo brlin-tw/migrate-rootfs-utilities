@@ -104,6 +104,7 @@ init(){
         ENABLE_SYNC_KDE_WALLET
         ENABLE_SYNC_USER_APPLICATIONS
         ENABLE_SYNC_NM_USER_CERTS
+        ENABLE_SYNC_VSCODE_WORKSPACE_STORAGE
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -282,6 +283,15 @@ init(){
 
     if test "${ENABLE_SYNC_NM_USER_CERTS}" == true; then
         if ! sync_nm_user_certs \
+            "${user_home_dir}" \
+            "${DESTINATION_HOMEDIR_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            exit 2
+        fi
+    fi
+
+    if test "${ENABLE_SYNC_VSCODE_WORKSPACE_STORAGE}" == true; then
+        if ! sync_vscode_workspace_storage \
             "${user_home_dir}" \
             "${DESTINATION_HOMEDIR_SPEC}" \
             "${COMMON_RSYNC_OPTIONS[@]}"; then
@@ -818,6 +828,35 @@ sync_user_fonts(){
         "${destination_user_fonts_dir_spec}"; then
         printf \
             'Error: Unable to sync the user fonts.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_vscode_workspace_storage(){
+    local user_home_dir="${1}"; shift 1
+    local destination_homedir_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    print_progress 'Syncing VSCode user workspace storage...'
+    local vscode_workspace_storage_dir_relative=/.config/Code/User/workspaceStorage
+    local source_vscode_workspace_storage_dir="${user_home_dir}${vscode_workspace_storage_dir_relative}"
+    local destination_vscode_workspace_storage_dir_spec="${destination_homedir_spec}${vscode_workspace_storage_dir_relative}"
+
+    if ! test -e "${source_vscode_workspace_storage_dir}"; then
+        printf \
+            "%s: Warning: The VSCode user workspace storage directory doesn't exist, skipping...\\n" \
+            "${FUNCNAME[0]}" \
+            1>&2
+        return 0
+    fi
+
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${source_vscode_workspace_storage_dir}/" \
+        "${destination_vscode_workspace_storage_dir_spec}"; then
+        printf \
+            'Error: Unable to sync the VSCode user workspace storage.\n' \
             1>&2
         return 2
     fi
