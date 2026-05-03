@@ -325,7 +325,9 @@ sync_user_dirs(){
         printf \
             'Info: Syncing the user directories definition file...\n'
         if ! rsync \
-            "${user_dirs_rsync_options[@]}" \
+            --archive \
+            --checksum \
+            --verbose \
             "${user_dirs_file}" \
             "${destination_homedir_spec}/.config/user-dirs.dirs"; then
             printf \
