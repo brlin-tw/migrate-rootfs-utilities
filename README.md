@@ -175,6 +175,13 @@ Whether to sync the KDE Connect data.  This avoids re-pairing the paired devices
 **Supported values:** `true`, `false`.  
 **Default value:** `true`.
 
+#### ENABLE_SYNC_USER_FONTS
+
+Whether to sync the user installed fonts.  This avoids re-installing the user fonts.
+
+**Supported values:** `true`, `false`.  
+**Default value:** `true`.
+
 ### migrate-system-data
 
 The following configuration variables are only used in the migrate-system-data utility:

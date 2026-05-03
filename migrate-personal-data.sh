@@ -270,6 +270,15 @@ init(){
         fi
     fi
 
+    if test "${ENABLE_SYNC_USER_FONTS}" == true; then
+        if ! sync_user_fonts \
+            "${user_home_dir}" \
+            "${DESTINATION_HOMEDIR_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            exit 2
+        fi
+    fi
+
     print_progress 'Determining the end timestamp...'
     if ! end_timestamp="$(printf '%(%s)T')"; then
         printf \
@@ -749,6 +758,35 @@ sync_vbox_vms(){
         "${destination_vbox_vm_dir}"; then
         printf \
             'Error: Unable to sync the VirtualBox VMs.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_user_fonts(){
+    local user_home_dir="${1}"; shift 1
+    local destination_homedir_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    print_progress 'Syncing user fonts...'
+    local user_fonts_dir_relative=/.local/share/fonts
+    local source_user_fonts_dir="${user_home_dir}${user_fonts_dir_relative}"
+    local destination_user_fonts_dir_spec="${destination_homedir_spec}${user_fonts_dir_relative}"
+
+    if ! test -e "${source_user_fonts_dir}"; then
+        printf \
+            "%s: Warning: The user fonts directory doesn't exist, skipping...\\n" \
+            "${FUNCNAME[0]}" \
+            1>&2
+        return 0
+    fi
+
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${source_user_fonts_dir}/" \
+        "${destination_user_fonts_dir_spec}"; then
+        printf \
+            'Error: Unable to sync the user fonts.\n' \
             1>&2
         return 2
     fi
