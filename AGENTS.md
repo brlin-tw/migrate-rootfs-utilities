@@ -2,6 +2,24 @@
 
 This file contains instructions and guidelines for AI agents interacting with this repository. It outlines the expected behavior, coding standards, and collaboration protocols to ensure effective and efficient contributions.
 
+## Version control
+
+DO NOT commit new revisions, instead, stop and ask the human to do it themselves.  You may suggest messages for the revision to be created.
+
+Commit messages should contain the following:
+
+```text
+Assisted-by: <your name or identifier> (<the model name in use>)
+```
+
+For example:
+
+```text
+Assisted-by: OpenCode (gemma-4)
+```
+
+If the model name is "Default model", ask the human for the actual model name in use and use it in the commit message.
+
 ## Bash coding style
 
 The following coding style guidelines should be followed when writing Bash scripts:
