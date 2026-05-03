@@ -140,7 +140,7 @@ init(){
     print_progress 'Determining the user home directory...'
     if test "${SOURCE_HOMEDIR_SPEC}" == auto; then
         if ! user_home_dir="$(
-            getent passwd "${USER}" \
+            getent passwd "${SUDO_USER:-"${USER}"}" \
                 | cut --delimiter=: --fields=6
             )"; then
             printf \
