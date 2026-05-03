@@ -98,8 +98,8 @@ init(){
     fi
     printf \
         'Info: Start timestamp: %s(%s).\n' \
-        "$start_timestamp" \
-        "$(date --date="@$start_timestamp" '+%Y-%m-%d %H:%M:%S')"
+        "${start_timestamp}" \
+        "$(date --date="@${start_timestamp}" '+%Y-%m-%d %H:%M:%S')"
 
     print_progress 'Determining the user home directory...'
     if test "${SOURCE_HOMEDIR_SPEC}" == auto; then
