@@ -182,6 +182,13 @@ Whether to sync the user installed fonts.  This avoids re-installing the user fo
 **Supported values:** `true`, `false`.  
 **Default value:** `true`.
 
+#### ENABLE_SYNC_NM_USER_CERTS
+
+Whether to sync the NetworkManager user certificates(in the `~/.local/share/networkmanagement/certificates` directory).  This avoids losing certificates for VPN connections.
+
+**Supported values:** `true`, `false`.  
+**Default value:** `true`.
+
 ### migrate-system-data
 
 The following configuration variables are only used in the migrate-system-data utility:

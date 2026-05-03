@@ -103,6 +103,7 @@ init(){
         ENABLE_SYNC_GNOME_KEYRING
         ENABLE_SYNC_KDE_WALLET
         ENABLE_SYNC_USER_APPLICATIONS
+        ENABLE_SYNC_NM_USER_CERTS
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -272,6 +273,15 @@ init(){
 
     if test "${ENABLE_SYNC_USER_FONTS}" == true; then
         if ! sync_user_fonts \
+            "${user_home_dir}" \
+            "${DESTINATION_HOMEDIR_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            exit 2
+        fi
+    fi
+
+    if test "${ENABLE_SYNC_NM_USER_CERTS}" == true; then
+        if ! sync_nm_user_certs \
             "${user_home_dir}" \
             "${DESTINATION_HOMEDIR_SPEC}" \
             "${COMMON_RSYNC_OPTIONS[@]}"; then
@@ -808,6 +818,41 @@ sync_user_fonts(){
         "${destination_user_fonts_dir_spec}"; then
         printf \
             'Error: Unable to sync the user fonts.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_nm_user_certs(){
+    local user_home_dir="${1}"; shift 1
+    local destination_homedir_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    print_progress 'Syncing NetworkManager user certificates...'
+    local user_certs_dir_relative=/.local/share/networkmanagement/certificates
+    local user_certs_dir_old_relative=/.cert
+
+    if ! test -e "${user_home_dir}${user_certs_dir_relative}"; then
+        if test -e "${user_home_dir}${user_certs_dir_old_relative}"; then
+            user_certs_dir_relative="${user_certs_dir_old_relative}"
+        else
+            printf \
+                "%s: Warning: The NetworkManager user certificates directory doesn't exist, skipping...\\n" \
+                "${FUNCNAME[0]}" \
+                1>&2
+            return 0
+        fi
+    fi
+
+    local source_user_certs_dir="${user_home_dir}${user_certs_dir_relative}"
+    local destination_user_certs_dir_spec="${destination_homedir_spec}${user_certs_dir_relative}"
+
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${source_user_certs_dir}/" \
+        "${destination_user_certs_dir_spec}"; then
+        printf \
+            'Error: Unable to sync the NetworkManager user certificates.\n' \
             1>&2
         return 2
     fi
