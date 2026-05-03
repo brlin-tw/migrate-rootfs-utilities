@@ -360,8 +360,6 @@ sync_user_dirs(){
         user_dirs+=("${!var}")
     done
 
-    # We can't delete excluded files here as we don't want to remove the
-    # previously synced workspace dir
     user_dirs_rsync_options=(
         "${COMMON_RSYNC_OPTIONS[@]}"
         --checksum
