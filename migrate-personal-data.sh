@@ -322,7 +322,8 @@ sync_user_dirs(){
             return 2
         fi
 
-        # Sync the user-dirs.dirs file itself
+        printf \
+            'Info: Syncing the user directories definition file...\n'
         if ! rsync \
             "${user_dirs_rsync_options[@]}" \
             "${user_dirs_file}" \
