@@ -196,6 +196,13 @@ Whether to sync the VSCode user workspace storage(in the `~/.config/Code/User/wo
 **Supported values:** `true`, `false`.  
 **Default value:** `true`.
 
+#### ENABLE_SYNC_CURSOR_WORKSPACE_STORAGE
+
+Whether to sync the Cursor user workspace storage(in the `~/.config/Cursor/User/workspaceStorage` directory).  This preserves workspace-scoped data such as Cursor AI chat histories.
+
+**Supported values:** `true`, `false`.  
+**Default value:** `true`.
+
 ### migrate-system-data
 
 The following configuration variables are only used in the migrate-system-data utility:

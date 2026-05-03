@@ -105,6 +105,7 @@ init(){
         ENABLE_SYNC_USER_APPLICATIONS
         ENABLE_SYNC_NM_USER_CERTS
         ENABLE_SYNC_VSCODE_WORKSPACE_STORAGE
+        ENABLE_SYNC_CURSOR_WORKSPACE_STORAGE
     )
     local validate_failed=false
     for param in "${boolean_parameters[@]}"; do
@@ -292,6 +293,15 @@ init(){
 
     if test "${ENABLE_SYNC_VSCODE_WORKSPACE_STORAGE}" == true; then
         if ! sync_vscode_workspace_storage \
+            "${user_home_dir}" \
+            "${DESTINATION_HOMEDIR_SPEC}" \
+            "${COMMON_RSYNC_OPTIONS[@]}"; then
+            exit 2
+        fi
+    fi
+
+    if test "${ENABLE_SYNC_CURSOR_WORKSPACE_STORAGE}" == true; then
+        if ! sync_cursor_workspace_storage \
             "${user_home_dir}" \
             "${DESTINATION_HOMEDIR_SPEC}" \
             "${COMMON_RSYNC_OPTIONS[@]}"; then
@@ -857,6 +867,35 @@ sync_vscode_workspace_storage(){
         "${destination_vscode_workspace_storage_dir_spec}"; then
         printf \
             'Error: Unable to sync the VSCode user workspace storage.\n' \
+            1>&2
+        return 2
+    fi
+}
+
+sync_cursor_workspace_storage(){
+    local user_home_dir="${1}"; shift 1
+    local destination_homedir_spec="${1}"; shift 1
+    local -a rsync_options=("${@}"); set --
+
+    print_progress 'Syncing Cursor user workspace storage...'
+    local cursor_workspace_storage_dir_relative=/.config/Cursor/User/workspaceStorage
+    local source_cursor_workspace_storage_dir="${user_home_dir}${cursor_workspace_storage_dir_relative}"
+    local destination_cursor_workspace_storage_dir_spec="${destination_homedir_spec}${cursor_workspace_storage_dir_relative}"
+
+    if ! test -e "${source_cursor_workspace_storage_dir}"; then
+        printf \
+            "%s: Warning: The Cursor user workspace storage directory doesn't exist, skipping...\\n" \
+            "${FUNCNAME[0]}" \
+            1>&2
+        return 0
+    fi
+
+    if ! rsync \
+        "${rsync_options[@]}" \
+        "${source_cursor_workspace_storage_dir}/" \
+        "${destination_cursor_workspace_storage_dir_spec}"; then
+        printf \
+            'Error: Unable to sync the Cursor user workspace storage.\n' \
             1>&2
         return 2
     fi
