@@ -13,6 +13,42 @@ init(){
         exit 2
     fi
 
+    print_progress 'Determining operation timestamp...'
+    local operation_timestamp
+    if ! operation_timestamp="$(printf '%(%Y%m%d-%H%M%S)T')"; then
+        printf \
+            'Error: Unable to determine the operation timestamp.\n' \
+            1>&2
+        exit 2
+    fi
+    printf \
+        'Info: Operation timestamp determined to be: %s.\n' \
+        "${operation_timestamp}"
+
+    print_progress 'Setting up logging...'
+    local log_file="${script_dir}/${script_name}-${operation_timestamp}.log.gz"
+    printf \
+        'Info: Log file determined to be: %s.\n' \
+        "${log_file}"
+
+    printf \
+        'Info: Duplicating console output to the log file...\n'
+    if ! exec > >(tee >(gzip -c >"${log_file}")); then
+        printf \
+            'Error: Unable to duplicate console output to the log file.\n' \
+            1>&2
+        exit 2
+    fi
+
+    printf \
+        'Info: Duplicating the standard error to the log file as well...\n'
+    if ! exec 2>&1; then
+        printf \
+            'Error: Unable to duplicate the standard error to the log file.\n' \
+            1>&2
+        exit 2
+    fi
+
     print_progress 'Loading the configuration file...'
     # shellcheck source=SCRIPTDIR/config.sh.source
     if ! source "${script_dir}/config.sh.source"; then
@@ -733,8 +769,10 @@ required_commands=(
     cut
     date
     getent
+    gzip
     realpath
     rsync
+    tee
 )
 flag_required_commands_check_failed=false
 for command in "${required_commands[@]}"; do
