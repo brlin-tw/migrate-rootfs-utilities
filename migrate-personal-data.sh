@@ -580,7 +580,9 @@ sync_firefox_data(){
         return 0
     fi
 
-    # NOTE: Rsync exit status 24 means "Partial transfer due to vanished source files", which would happen if the browser is running during the synchonization
+    # NOTE: Rsync exit status 24 means "Partial transfer due to vanished
+    # source files", which would happen if the browser is running during
+    # the synchonization
     if ! {
             rsync \
             "${rsync_options[@]}" \
