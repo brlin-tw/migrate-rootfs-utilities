@@ -441,10 +441,14 @@ sync_user_dirs(){
                 'Info: Syncing the %s user directory...\n' \
                 "${dir_name}"
 
+            # NOTE: Rsync exit status 24 means "Partial transfer due to vanished
+            # source files", which would happen if the browser is running during
+            # the synchonization
             if ! rsync \
                 "${user_dirs_rsync_options[@]}" \
                 "${dir}/" \
-                "${destination_homedir_spec}/${dir_name}"; then
+                "${destination_homedir_spec}/${dir_name}" \
+                || test "${?}" == 24; then
                 printf \
                     'Error: Unable to sync the "%s" user directory.\n' \
                     "${dir_name}" \
