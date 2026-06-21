@@ -263,6 +263,13 @@ Whether to sync the SSH host keys.
 **Supported values:** `true`, `false`.  
 **Default value:** `true`.
 
+#### SKIP_SYNCING_USER_DOCS
+
+Whether to sync the user's "Documents" folder.  This reduces time of unnecessary comparing the folder content if the syncing has been already done before and the "Documents" folder is not changed since then.
+
+**Supported values:** `true`, `false`.  
+**Default value:** `false`.
+
 ## References
 
 The following materials are referenced during the development of this project:

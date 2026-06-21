@@ -435,6 +435,14 @@ sync_user_dirs(){
                 continue
             fi
 
+            if test "${SKIP_SYNCING_USER_DOCS}" == true \
+                && test -v XDG_DOCUMENTS_DIR \
+                && test "${dir}" == "${XDG_DOCUMENTS_DIR}"; then
+                printf \
+                    'Info: Skipping syncing the Documents directory as per configuration...\n'
+                continue
+            fi
+
             dir_name="${dir##*/}"
 
             printf \
